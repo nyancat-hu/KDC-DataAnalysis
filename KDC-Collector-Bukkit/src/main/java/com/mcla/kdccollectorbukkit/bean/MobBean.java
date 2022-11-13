@@ -1,39 +1,69 @@
 package com.mcla.kdccollectorbukkit.bean;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.entity.EntityEvent;
 import org.bukkit.inventory.EntityEquipment;
 
 /**
- * @Description: bean of mob spawn event
+ * @Description: 生物相关Bean
  * @ClassName: MobBean
  * @Author: ice_light
  * @Date: 2022/10/12 21:45
  * @Version: 1.0
  */
-public class MobBean {
-    private String eventName;
-    private String entityName;
-    private Location location;
+public abstract class MobBean {
+    String eventName;
+    String entityName;
+    Location location;
+    String serverName;
+    boolean isSpawn;
+    int entityNums;
+    int tileEntityNums;
+    int chunkX;
+    int chunkZ;
 
-    private CreatureSpawnEvent.SpawnReason spawnReason;
-    private EntityEquipment equipment;
-    private int health;
-
-    @Override
-    public String toString() {
-        return "MobBean{" +
-                "eventName='" + eventName + '\'' +
-                ", entityName='" + entityName + '\'' +
-                ", location=" + location +
-                ", spawnReason=" + spawnReason +
-                ", equipment=" + equipment +
-                ", health=" + health +
-                '}';
+    public void setEssentialInfo(EntityEvent event){
+        setServerName(Bukkit.getServerName());
+        setLocation(event.getEntity().getLocation());
+        setEntityName(event.getEntity().getName());
+        setEventName(event.getEventName());
+        setEntityNums(event.getEntity().getLocation().getChunk().getEntities().length);
+        setTileEntityNums(event.getEntity().getLocation().getChunk().getTileEntities().length);
+        setChunkX(event.getEntity().getLocation().getChunk().getX());
+        setChunkZ(event.getEntity().getLocation().getChunk().getZ());
+    }
+    public int getEntityNums() {
+        return entityNums;
     }
 
-    public MobBean() {
-        this.eventName = "生物生成";
+    public void setEntityNums(int entityNums) {
+        this.entityNums = entityNums;
+    }
+
+    public int getTileEntityNums() {
+        return tileEntityNums;
+    }
+
+    public void setTileEntityNums(int tileEntityNums) {
+        this.tileEntityNums = tileEntityNums;
+    }
+
+    public int getChunkX() {
+        return chunkX;
+    }
+
+    public void setChunkX(int chunkX) {
+        this.chunkX = chunkX;
+    }
+
+    public int getChunkZ() {
+        return chunkZ;
+    }
+
+    public void setChunkZ(int chunkZ) {
+        this.chunkZ = chunkZ;
     }
 
     public String getEventName() {
@@ -60,30 +90,20 @@ public class MobBean {
         this.location = location;
     }
 
-    public CreatureSpawnEvent.SpawnReason getSpawnReason() {
-        return spawnReason;
+    public String getServerName() {
+        return serverName;
     }
 
-    public void setSpawnReason(CreatureSpawnEvent.SpawnReason spawnReason) {
-        this.spawnReason = spawnReason;
+    public void setServerName(String serverName) {
+        this.serverName = serverName;
     }
 
-    public EntityEquipment getEquipment() {
-        return equipment;
+    public boolean isSpawn() {
+        return isSpawn;
     }
 
-    public void setEquipment(EntityEquipment equipment) {
-        this.equipment = equipment;
+    public void setSpawn(boolean spawn) {
+        isSpawn = spawn;
     }
-
-    public int getHealth() {
-        return health;
-    }
-
-    public void setHealth(int health) {
-        this.health = health;
-    }
-
-
 
 }

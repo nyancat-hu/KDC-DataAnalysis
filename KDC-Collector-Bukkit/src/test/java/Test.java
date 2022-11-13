@@ -1,29 +1,23 @@
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class Test {
-    static List<List<Integer>> totalList = new LinkedList<>();
-    static List<Integer> path = new LinkedList<>();
+    static HashSet<String> hashSet = new HashSet<>();
+    static LinkedList<Integer> mark = new LinkedList<>();
     public static void main(String[] args) {
-        combine(4,2);
+        List<String> wordDict = new LinkedList<>();
+        Collections.addAll(wordDict, "leet","code");
+        lengthOfLIS(new int[]{10,9,2,5,3,7,101,18});
     }
-
-    public static List<List<Integer>> combine(int n, int k) {
-        getResult(1,k,n);
-        return totalList;
-    }
-    public static void getResult(int start, int k, int n){
-        if(k==0) {
-            totalList.add(new ArrayList<Integer>(path)); // 这里必须要新建一个对象，不然所有列表里都是重复的引用
-            path.clear();
-            return;
+    public static int lengthOfLIS(int[] nums) {
+        int[][] dp = new int[nums.length][nums.length];
+        for(int j=1;j<nums.length;j++){
+            for(int i=0;i<j;i++){
+                if(nums[j]>nums[j-1]) dp[i][j] = dp[i][j-1] +1;
+            }
         }
-        for(int i=start;i<=n;i++){
-            path.add(i);
-            getResult(start+1,k-1,n);// 很显然，代码不是按顺序执行的
-        }
-    }
 
+        int maxVal = 0;
+        for(int i =0;i<nums.length;i++) if(dp[i][nums.length-1]>maxVal) maxVal=dp[i][nums.length-1];
+        return maxVal;
+    }
 }
