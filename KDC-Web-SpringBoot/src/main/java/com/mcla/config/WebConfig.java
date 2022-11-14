@@ -13,6 +13,7 @@ import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.admin.StreamManager;
 import io.pravega.client.stream.EventStreamWriter;
 import io.pravega.client.stream.EventWriterConfig;
+import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.client.stream.impl.JavaSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -37,6 +38,11 @@ public class WebConfig {
     @Bean
     public EventStreamWriter<String> getStreamWriter(){
         URI HOST = URI.create(uri);
+        StreamManager streamManager = StreamManager.create(HOST);
+        streamManager.createScope(SCOPE_NAME);
+        streamManager.createStream(SCOPE_NAME,
+                STREAM_NAME,
+                StreamConfiguration.builder().build());
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(
                 SCOPE_NAME,
                 ClientConfig.builder().controllerURI(HOST).build());
