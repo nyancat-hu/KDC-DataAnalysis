@@ -14,6 +14,28 @@
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
+        <flink.version>1.12.0</flink.version>
+        <scala.version>2.12</scala.version>
     </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-java</artifactId>
+            <version>${flink.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-streaming-java_${scala.version}</artifactId>
+            <version>${flink.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.pravega</groupId>
+            <artifactId>pravega-connectors-flink-1.7_2.12</artifactId>
+            <version>0.7.0</version>
+        </dependency>
+    </dependencies>
+
+
 
 </project>
