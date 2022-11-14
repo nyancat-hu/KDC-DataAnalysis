@@ -13,7 +13,6 @@ public class ItemPickUpBean extends ItemBean{
         return "ItemPickUpBean{" +
                 "eventName='" + eventName + '\'' +
                 ", itemName='" + itemName + '\'' +
-                ", location=" + location +
                 ", serverName='" + serverName + '\'' +
                 ", isSpawn=" + isSpawn +
                 ", entityNums=" + entityNums +

@@ -23,7 +23,6 @@ public class MobExplodeBean extends MobBean{
         return "MobExplodeBean{" +
                 "eventName='" + eventName + '\'' +
                 ", entityName='" + entityName + '\'' +
-                ", location=" + location +
                 ", serverName='" + serverName + '\'' +
                 ", isSpawn=" + isSpawn +
                 ", yield=" + yield +

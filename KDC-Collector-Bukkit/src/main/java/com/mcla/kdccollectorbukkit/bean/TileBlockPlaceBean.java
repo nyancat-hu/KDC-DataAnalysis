@@ -17,7 +17,6 @@ public class TileBlockPlaceBean extends TileBean{
         return "TileBlockPlaceBean{" +
                 "eventName='" + eventName + '\'' +
                 ", blockName='" + blockName + '\'' +
-                ", location=" + location +
                 ", serverName='" + serverName + '\'' +
                 ", isPlace=" + isPlace +
                 ", entityNums=" + entityNums +

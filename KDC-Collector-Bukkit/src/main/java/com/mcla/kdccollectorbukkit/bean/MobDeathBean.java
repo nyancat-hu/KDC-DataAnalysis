@@ -15,8 +15,6 @@ import java.util.List;
  */
 public class MobDeathBean extends MobBean{
     private int droppedExp;
-    private List<ItemStack> drops;
-    private EntityEquipment equipment;
     private int health;
 
     public MobDeathBean(boolean isSpawn) {
@@ -36,24 +34,14 @@ public class MobDeathBean extends MobBean{
         return "MobDeathBean{" +
                 "eventName='" + eventName + '\'' +
                 ", entityName='" + entityName + '\'' +
-                ", location=" + location +
                 ", serverName='" + serverName + '\'' +
                 ", isSpawn=" + isSpawn +
                 ", droppedExp=" + droppedExp +
-                ", drops=" + drops +
-                ", equipment=" + equipment +
                 ", health=" + health +
                 '}';
+
     }
 
-    public void setDrops(List<ItemStack> drops) {
-        this.drops = drops;
-    }
-
-
-    public void setEquipment(EntityEquipment equipment) {
-        this.equipment = equipment;
-    }
 
     public void setHealth(int health) {
         this.health = health;

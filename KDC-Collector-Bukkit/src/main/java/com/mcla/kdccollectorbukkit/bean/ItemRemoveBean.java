@@ -13,7 +13,6 @@ public class ItemRemoveBean extends ItemBean{
         return "ItemRemoveBean{" +
                 "eventName='" + eventName + '\'' +
                 ", itemName='" + itemName + '\'' +
-                ", location=" + location +
                 ", serverName='" + serverName + '\'' +
                 ", isSpawn=" + isSpawn +
                 ", entityNums=" + entityNums +

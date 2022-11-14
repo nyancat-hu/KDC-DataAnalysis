@@ -1,4 +1,4 @@
-package dao;
+package com.mcla.dao;
 
 public class LogMapper {
 }

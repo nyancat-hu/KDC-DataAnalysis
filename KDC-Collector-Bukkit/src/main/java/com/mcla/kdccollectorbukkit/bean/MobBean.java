@@ -16,8 +16,45 @@ import org.bukkit.inventory.EntityEquipment;
 public abstract class MobBean {
     String eventName;
     String entityName;
-    Location location;
+//    Location location;
     String serverName;
+
+    public int getX() {
+        return x;
+    }
+
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
+
+    public int getZ() {
+        return z;
+    }
+
+    public void setZ(int z) {
+        this.z = z;
+    }
+
+    public String getWorld() {
+        return world;
+    }
+
+    public void setWorld(String world) {
+        this.world = world;
+    }
+
+    int x;
+    int y;
+    int z;
+    String world;
     boolean isSpawn;
     int entityNums;
     int tileEntityNums;
@@ -26,7 +63,11 @@ public abstract class MobBean {
 
     public void setEssentialInfo(EntityEvent event){
         setServerName(Bukkit.getServerName());
-        setLocation(event.getEntity().getLocation());
+        setX((int) event.getEntity().getLocation().getX());
+        setY((int) event.getEntity().getLocation().getY());
+        setZ((int) event.getEntity().getLocation().getZ());
+        setWorld(event.getEntity().getLocation().getWorld().getName());
+
         setEntityName(event.getEntity().getName());
         setEventName(event.getEventName());
         setEntityNums(event.getEntity().getLocation().getChunk().getEntities().length);
@@ -80,14 +121,6 @@ public abstract class MobBean {
 
     public void setEntityName(String entityName) {
         this.entityName = entityName;
-    }
-
-    public Location getLocation() {
-        return location;
-    }
-
-    public void setLocation(Location location) {
-        this.location = location;
     }
 
     public String getServerName() {

@@ -1,0 +1,25 @@
+package com.mcla.service.impl;
+
+import org.springframework.stereotype.Service;
+import com.alibaba.fastjson.JSONArray;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.Map;
+
+@Service
+public class LogServiceImpl {
+
+    public void printLog(Map<String,String> map){
+        //1.打印输出到控制台
+
+        Object obj = JSONArray.toJSON(map);
+        System.out.println(obj.toString());
+
+        //2.落盘   借助记录日志的第三方框架 log4j [logback]
+//        log.info(jsonLog);
+        //3.将生成的日主发送到kafka对应的主题中
+//        kafkaTemplate.send("ods_base_log",jsonLog);
+    }
+}

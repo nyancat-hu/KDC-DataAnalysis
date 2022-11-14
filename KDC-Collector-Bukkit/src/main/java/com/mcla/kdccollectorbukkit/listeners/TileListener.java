@@ -1,9 +1,12 @@
 package com.mcla.kdccollectorbukkit.listeners;
 
+import com.mcla.kdccollectorbukkit.KDCCollectorBukkit;
 import com.mcla.kdccollectorbukkit.bean.ItemDropBean;
 import com.mcla.kdccollectorbukkit.bean.ItemPickUpBean;
 import com.mcla.kdccollectorbukkit.bean.TileBlockDamageBean;
 import com.mcla.kdccollectorbukkit.bean.TileBlockPlaceBean;
+import com.mcla.kdccollectorbukkit.utils.HttpUtil;
+import com.mcla.kdccollectorbukkit.utils.JsonUtil;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -26,6 +29,7 @@ public class TileListener implements Listener {
             // 如果这是一个tileEntity，则继续执行下去
             TileBlockPlaceBean mb = new TileBlockPlaceBean(true);
             mb.setEssentialInfo(event);
+            HttpUtil.postJson(KDCCollectorBukkit.targetUrl, JsonUtil.praseJson(mb));
 //            System.out.println(mb);
         }
     }
@@ -36,6 +40,7 @@ public class TileListener implements Listener {
             // 如果这是一个tileEntity，则继续执行下去
             TileBlockDamageBean mb = new TileBlockDamageBean(false);
             mb.setEssentialInfo(event);
+            HttpUtil.postJson(KDCCollectorBukkit.targetUrl, JsonUtil.praseJson(mb));
 //            System.out.println(mb);
         }
     }

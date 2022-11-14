@@ -17,7 +17,6 @@ public class TileBlockDamageBean extends TileBean{
         return "TileBlockDamageBean{" +
                 "eventName='" + eventName + '\'' +
                 ", blockName='" + blockName + '\'' +
-                ", location=" + location +
                 ", serverName='" + serverName + '\'' +
                 ", isPlace=" + isPlace +
                 ", entityNums=" + entityNums +

@@ -14,7 +14,6 @@ public class ItemDropBean extends ItemBean{
         return "ItemDropBean{" +
                 "eventName='" + eventName + '\'' +
                 ", itemName='" + itemName + '\'' +
-                ", location=" + location +
                 ", serverName='" + serverName + '\'' +
                 ", isSpawn=" + isSpawn +
                 ", entityNums=" + entityNums +

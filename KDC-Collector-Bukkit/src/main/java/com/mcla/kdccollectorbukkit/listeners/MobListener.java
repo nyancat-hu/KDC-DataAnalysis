@@ -1,7 +1,10 @@
 package com.mcla.kdccollectorbukkit.listeners;
 
 import com.bergerkiller.bukkit.common.events.EntityRemoveEvent;
+import com.mcla.kdccollectorbukkit.KDCCollectorBukkit;
 import com.mcla.kdccollectorbukkit.bean.*;
+import com.mcla.kdccollectorbukkit.utils.HttpUtil;
+import com.mcla.kdccollectorbukkit.utils.JsonUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -32,18 +35,16 @@ public class MobListener implements Listener {
         mb.setSpawnReason(event.getSpawnReason());
 
 //        System.out.println(mb);
+        HttpUtil.postJson(KDCCollectorBukkit.targetUrl, JsonUtil.praseJson(mb));
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void creatureDeath(EntityDeathEvent event) {
         MobDeathBean mb = new MobDeathBean(false);
         mb.setEssentialInfo(event);
-
         mb.setDroppedExp(event.getDroppedExp());
-        mb.setDrops(event.getDrops());
-        mb.setEquipment(event.getEntity().getEquipment());
         mb.setHealth((int) event.getEntity().getHealth());
-
+        HttpUtil.postJson(KDCCollectorBukkit.targetUrl,JsonUtil.praseJson(mb));
 //        System.out.println(mb);
     }
 
@@ -51,9 +52,8 @@ public class MobListener implements Listener {
     public void creatureExplode(EntityExplodeEvent event) {
         MobExplodeBean mb = new MobExplodeBean(false);
         mb.setEssentialInfo(event);
-
         mb.setYield(event.getYield());
-
+        HttpUtil.postJson(KDCCollectorBukkit.targetUrl,JsonUtil.praseJson(mb));
 //        System.out.println(mb);
     }
 
@@ -62,7 +62,7 @@ public class MobListener implements Listener {
         if(!(event.getEntity() instanceof Player) && !(event.getEntity() instanceof Item)){
             MobRemoveBean mb = new MobRemoveBean(false);
             mb.setEssentialInfo(event);
-
+            HttpUtil.postJson(KDCCollectorBukkit.targetUrl,JsonUtil.praseJson(mb));
 //            System.out.println(mb);
         }
     }

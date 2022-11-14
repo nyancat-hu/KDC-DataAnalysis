@@ -15,7 +15,43 @@ import org.bukkit.event.entity.EntityEvent;
 public abstract class TileBean {
     String eventName;
     String blockName;
-    Location location;
+    int x;
+    int y;
+    int z;
+    String world;
+
+    public int getX() {
+        return x;
+    }
+
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
+
+    public int getZ() {
+        return z;
+    }
+
+    public void setZ(int z) {
+        this.z = z;
+    }
+
+    public String getWorld() {
+        return world;
+    }
+
+    public void setWorld(String world) {
+        this.world = world;
+    }
+
     String serverName;
     boolean isPlace;
     int entityNums;
@@ -25,7 +61,10 @@ public abstract class TileBean {
 
     public void setEssentialInfo(BlockEvent event){
         setServerName(Bukkit.getServerName());
-        setLocation(event.getBlock().getLocation());
+        setX((int) event.getBlock().getLocation().getX());
+        setY((int) event.getBlock().getLocation().getY());
+        setZ((int) event.getBlock().getLocation().getZ());
+        setWorld(event.getBlock().getLocation().getWorld().getName());
         setBlockName(event.getBlock().toString());
         setEventName(event.getEventName());
         setEntityNums(event.getBlock().getLocation().getChunk().getEntities().length);
@@ -47,14 +86,6 @@ public abstract class TileBean {
 
     public void setBlockName(String blockName) {
         this.blockName = blockName;
-    }
-
-    public Location getLocation() {
-        return location;
-    }
-
-    public void setLocation(Location location) {
-        this.location = location;
     }
 
     public String getServerName() {

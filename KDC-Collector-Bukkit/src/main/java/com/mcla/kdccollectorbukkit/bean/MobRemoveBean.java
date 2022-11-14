@@ -17,7 +17,6 @@ public class MobRemoveBean extends MobBean{
         return "MobRemoveBean{" +
                 "eventName='" + eventName + '\'' +
                 ", entityName='" + entityName + '\'' +
-                ", location=" + location +
                 ", serverName='" + serverName + '\'' +
                 ", isSpawn=" + isSpawn +
                 ", entityNums=" + entityNums +

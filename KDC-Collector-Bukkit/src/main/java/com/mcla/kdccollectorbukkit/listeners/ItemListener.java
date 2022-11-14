@@ -1,9 +1,12 @@
 package com.mcla.kdccollectorbukkit.listeners;
 
+import com.mcla.kdccollectorbukkit.KDCCollectorBukkit;
 import com.mcla.kdccollectorbukkit.bean.ItemDropBean;
 import com.mcla.kdccollectorbukkit.bean.ItemPickUpBean;
 import com.mcla.kdccollectorbukkit.bean.ItemRemoveBean;
 import com.mcla.kdccollectorbukkit.bean.MobSpawnBean;
+import com.mcla.kdccollectorbukkit.utils.HttpUtil;
+import com.mcla.kdccollectorbukkit.utils.JsonUtil;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -25,7 +28,7 @@ public class ItemListener implements Listener {
     public void itemSpawn(ItemSpawnEvent event) {
         ItemDropBean mb = new ItemDropBean(true);
         mb.setEssentialInfo(event);
-//        System.out.println(mb);
+        HttpUtil.postJson(KDCCollectorBukkit.targetUrl, JsonUtil.praseJson(mb));
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -33,13 +36,13 @@ public class ItemListener implements Listener {
         ItemPickUpBean mb = new ItemPickUpBean(false);
         mb.setEssentialInfo(event);
         mb.setItemName(event.getItem().getName());
-//        System.out.println(mb);
+        HttpUtil.postJson(KDCCollectorBukkit.targetUrl, JsonUtil.praseJson(mb));
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void itemRemove(ItemDespawnEvent event) {
         ItemRemoveBean mb = new ItemRemoveBean(false);
         mb.setEssentialInfo(event);
-//        System.out.println(mb);
+        HttpUtil.postJson(KDCCollectorBukkit.targetUrl, JsonUtil.praseJson(mb));
     }
 }
