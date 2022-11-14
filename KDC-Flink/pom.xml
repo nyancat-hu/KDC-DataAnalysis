@@ -14,7 +14,7 @@
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
-        <flink.version>1.12.0</flink.version>
+        <flink.version>1.13.6</flink.version>
         <scala.version>2.12</scala.version>
     </properties>
 
@@ -31,8 +31,8 @@
         </dependency>
         <dependency>
             <groupId>io.pravega</groupId>
-            <artifactId>pravega-connectors-flink-1.7_2.12</artifactId>
-            <version>0.7.0</version>
+            <artifactId>pravega-connectors-flink-1.13_2.12</artifactId>
+            <version>0.11.0</version>
         </dependency>
     </dependencies>
 
