@@ -8,13 +8,45 @@ import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+import io.pravega.client.ClientConfig;
+import io.pravega.client.EventStreamClientFactory;
+import io.pravega.client.admin.StreamManager;
+import io.pravega.client.stream.EventStreamWriter;
+import io.pravega.client.stream.EventWriterConfig;
+import io.pravega.client.stream.impl.JavaSerializer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.net.URI;
 import java.util.TimeZone;
 
 @Configuration
 public class WebConfig {
+    // 流的命名空间
+    @Value("${pravega.scope_name}")
+    private String SCOPE_NAME;
+
+    @Value("${pravega.stream_name}")
+    private String STREAM_NAME;
+
+    // grpc通讯地址
+    @Value("${pravega.uri}")
+    private String uri;
+
+    @Bean
+    public EventStreamWriter<String> getStreamWriter(){
+        URI HOST = URI.create(uri);
+        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(
+                SCOPE_NAME,
+                ClientConfig.builder().controllerURI(HOST).build());
+        return clientFactory.createEventWriter(
+                STREAM_NAME,
+                new JavaSerializer<>(),
+                EventWriterConfig.builder().build());
+    }
+
+
     /**
      * 对返回前端的JSON数据进行格式化
      *

@@ -1,5 +1,7 @@
 package com.mcla.service.impl;
 
+import io.pravega.client.stream.EventStreamWriter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.alibaba.fastjson.JSONArray;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -10,11 +12,13 @@ import java.util.Map;
 
 @Service
 public class LogServiceImpl {
-
+    @Autowired
+    EventStreamWriter<String> writer;
     public void printLog(Map<String,String> map){
         //1.打印输出到控制台
 
         Object obj = JSONArray.toJSON(map);
+        writer.writeEvent("routing-key",obj.toString());
         System.out.println(obj.toString());
 
         //2.落盘   借助记录日志的第三方框架 log4j [logback]

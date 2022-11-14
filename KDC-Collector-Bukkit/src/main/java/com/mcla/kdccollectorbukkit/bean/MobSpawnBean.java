@@ -11,16 +11,16 @@ import org.bukkit.inventory.EntityEquipment;
  * @Version: 1.0
  */
 public class MobSpawnBean extends MobBean{
-    private CreatureSpawnEvent.SpawnReason spawnReason;
+//    private CreatureSpawnEvent.SpawnReason spawnReason;
     private int health;
 
-    public CreatureSpawnEvent.SpawnReason getSpawnReason() {
-        return spawnReason;
-    }
-
-    public void setSpawnReason(CreatureSpawnEvent.SpawnReason spawnReason) {
-        this.spawnReason = spawnReason;
-    }
+//    public CreatureSpawnEvent.SpawnReason getSpawnReason() {
+//        return spawnReason;
+//    }
+//
+//    public void setSpawnReason(CreatureSpawnEvent.SpawnReason spawnReason) {
+//        this.spawnReason = spawnReason;
+//    }
 
 
     @Override
@@ -30,7 +30,6 @@ public class MobSpawnBean extends MobBean{
                 ", entityName='" + entityName + '\'' +
                 ", serverName='" + serverName + '\'' +
                 ", isSpawn=" + isSpawn +
-                ", spawnReason=" + spawnReason +
                 ", health=" + health +
                 '}';
     }
