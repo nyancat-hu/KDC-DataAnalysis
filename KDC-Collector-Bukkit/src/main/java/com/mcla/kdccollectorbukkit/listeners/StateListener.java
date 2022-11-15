@@ -25,7 +25,8 @@ public class StateListener implements Listener {
         scheduler.scheduleSyncRepeatingTask(KDCCollectorBukkit.snowkPlugin, () -> {
                 // 执行定时任务
                 StateBean spt = new StateBean();
+                System.out.println(JsonUtil.praseJson(spt));
                 HttpUtil.postJson(KDCCollectorBukkit.targetUrl, JsonUtil.praseJson(spt));
-        }, 0L, 300L);
+        }, 0L, 20L);
     }
 }
