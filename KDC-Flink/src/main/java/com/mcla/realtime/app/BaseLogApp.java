@@ -14,7 +14,10 @@ import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.configuration.ConfigConstants;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.RestOptions;
+import org.apache.flink.configuration.WebOptions;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
@@ -41,6 +44,10 @@ public class BaseLogApp {
         PravegaConfig pravegaConfig = PravegaConfig
                 .fromParams(params)
                 .withDefaultScope(PravegaConstant.DEFAULT_SCOPE);
+        Configuration conf = new Configuration();
+        conf.setString(RestOptions.BIND_PORT,"8081");
+        conf.setString(WebOptions.LOG_PATH,"tmp/log/job.log");
+        conf.setString(ConfigConstants.TASK_MANAGER_LOG_PATH_KEY,"tmp/log/job.log");
 
         // 1.2 create the Pravega input stream (if necessary)
         Stream stream = PravegaUtils.createStream(
@@ -48,7 +55,9 @@ public class BaseLogApp {
                 params.get(PravegaConstant.STREAM_PARAM, PravegaConstant.DEFAULT_STREAM));
 
         //1.3 创建Flink流执行环境
-        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(conf);
+//        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+
 
         //1.4 设置并行度
         env.setParallelism(1);
