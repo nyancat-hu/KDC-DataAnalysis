@@ -23,16 +23,6 @@ public class MobSpawnBean extends MobBean{
 //    }
 
 
-    @Override
-    public String toString() {
-        return "MobSpawnBean{" +
-                "eventName='" + eventName + '\'' +
-                ", entityName='" + entityName + '\'' +
-                ", serverName='" + serverName + '\'' +
-                ", isSpawn=" + isSpawn +
-                ", health=" + health +
-                '}';
-    }
 
     public int getHealth() {
         return health;

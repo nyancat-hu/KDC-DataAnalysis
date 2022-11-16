@@ -1,6 +1,7 @@
 package com.mcla.kdccollectorbukkit.utils;
 
 import me.lucko.spark.api.Spark;
+import me.lucko.spark.api.SparkProvider;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
@@ -12,12 +13,7 @@ import org.bukkit.plugin.RegisteredServiceProvider;
  * @Version: 1.0
  */
 public class SparkUtil {
-    private static Spark spark;
     public static Spark getSpark(){
-        RegisteredServiceProvider<Spark> provider = Bukkit.getServicesManager().getRegistration(Spark.class);
-        if (provider != null&&spark==null) {
-            spark = provider.getProvider();
-        }
-        return spark;
+        return SparkProvider.get();
     }
 }

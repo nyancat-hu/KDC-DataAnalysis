@@ -29,19 +29,9 @@ public class MobDeathBean extends MobBean{
         return droppedExp;
     }
 
-    @Override
-    public String toString() {
-        return "MobDeathBean{" +
-                "eventName='" + eventName + '\'' +
-                ", entityName='" + entityName + '\'' +
-                ", serverName='" + serverName + '\'' +
-                ", isSpawn=" + isSpawn +
-                ", droppedExp=" + droppedExp +
-                ", health=" + health +
-                '}';
-
+    public int getHealth() {
+        return health;
     }
-
 
     public void setHealth(int health) {
         this.health = health;

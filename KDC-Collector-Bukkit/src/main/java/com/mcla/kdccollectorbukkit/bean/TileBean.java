@@ -1,9 +1,7 @@
 package com.mcla.kdccollectorbukkit.bean;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.event.block.BlockEvent;
-import org.bukkit.event.entity.EntityEvent;
 
 /**
  * @Description: tile的Bean
@@ -19,6 +17,7 @@ public abstract class TileBean {
     int y;
     int z;
     String world;
+    String tag;
 
     public int getX() {
         return x;
@@ -54,12 +53,18 @@ public abstract class TileBean {
 
     String serverName;
     boolean isPlace;
-    int entityNums;
-    int tileEntityNums;
     int chunkX;
     int chunkZ;
 
-    public void setEssentialInfo(BlockEvent event){
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
+    }
+
+    public void setEssentialInfo(BlockEvent event) {
         setServerName(Bukkit.getServerName());
         setX((int) event.getBlock().getLocation().getX());
         setY((int) event.getBlock().getLocation().getY());
@@ -67,11 +72,11 @@ public abstract class TileBean {
         setWorld(event.getBlock().getLocation().getWorld().getName());
         setBlockName(event.getBlock().toString());
         setEventName(event.getEventName());
-        setEntityNums(event.getBlock().getLocation().getChunk().getEntities().length);
-        setTileEntityNums(event.getBlock().getLocation().getChunk().getTileEntities().length);
+        setTag(String.valueOf(event.getBlock().hashCode()));
         setChunkX(event.getBlock().getLocation().getChunk().getX());
         setChunkZ(event.getBlock().getLocation().getChunk().getZ());
     }
+
     public String getEventName() {
         return eventName;
     }
@@ -102,22 +107,6 @@ public abstract class TileBean {
 
     public void setPlace(boolean place) {
         isPlace = place;
-    }
-
-    public int getEntityNums() {
-        return entityNums;
-    }
-
-    public void setEntityNums(int entityNums) {
-        this.entityNums = entityNums;
-    }
-
-    public int getTileEntityNums() {
-        return tileEntityNums;
-    }
-
-    public void setTileEntityNums(int tileEntityNums) {
-        this.tileEntityNums = tileEntityNums;
     }
 
     public int getChunkX() {

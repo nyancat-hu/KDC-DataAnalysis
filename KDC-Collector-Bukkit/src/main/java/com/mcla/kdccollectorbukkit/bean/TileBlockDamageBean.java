@@ -10,19 +10,7 @@ package com.mcla.kdccollectorbukkit.bean;
 public class TileBlockDamageBean extends TileBean{
     public TileBlockDamageBean(boolean b) {
         this.isPlace = b;
+        this.toString();
     }
 
-    @Override
-    public String toString() {
-        return "TileBlockDamageBean{" +
-                "eventName='" + eventName + '\'' +
-                ", blockName='" + blockName + '\'' +
-                ", serverName='" + serverName + '\'' +
-                ", isPlace=" + isPlace +
-                ", entityNums=" + entityNums +
-                ", tileEntityNums=" + tileEntityNums +
-                ", chunkX=" + chunkX +
-                ", chunkZ=" + chunkZ +
-                '}';
-    }
 }

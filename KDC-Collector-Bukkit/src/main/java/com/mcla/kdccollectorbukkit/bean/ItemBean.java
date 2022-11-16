@@ -18,6 +18,7 @@ public abstract class ItemBean {
     int y;
     int z;
     String world;
+    String tag;
 
     public int getX() {
         return x;
@@ -53,8 +54,16 @@ public abstract class ItemBean {
 
     String serverName;
     boolean isSpawn;
-    int entityNums;
-    int tileEntityNums;
+    int itemAmount;
+
+    public int getItemAmount() {
+        return itemAmount;
+    }
+
+    public void setItemAmount(int itemAmount) {
+        this.itemAmount = itemAmount;
+    }
+
     int chunkX;
     int chunkZ;
 
@@ -91,21 +100,6 @@ public abstract class ItemBean {
         isSpawn = spawn;
     }
 
-    public int getEntityNums() {
-        return entityNums;
-    }
-
-    public void setEntityNums(int entityNums) {
-        this.entityNums = entityNums;
-    }
-
-    public int getTileEntityNums() {
-        return tileEntityNums;
-    }
-
-    public void setTileEntityNums(int tileEntityNums) {
-        this.tileEntityNums = tileEntityNums;
-    }
 
     public int getChunkX() {
         return chunkX;
@@ -123,6 +117,14 @@ public abstract class ItemBean {
         this.chunkZ = chunkZ;
     }
 
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
+    }
+
     public void setEssentialInfo(EntityEvent event){
         setServerName(Bukkit.getServerName());
         setX((int) event.getEntity().getLocation().getX());
@@ -131,8 +133,9 @@ public abstract class ItemBean {
         setWorld(event.getEntity().getLocation().getWorld().getName());
         setItemName(event.getEntity().getName());
         setEventName(event.getEventName());
-        setEntityNums(event.getEntity().getLocation().getChunk().getEntities().length);
-        setTileEntityNums(event.getEntity().getLocation().getChunk().getTileEntities().length);
+        setTag(String.valueOf(event.getEntity().hashCode()));
+//        setEntityNums(event.getEntity().getLocation().getChunk().getEntities().length);
+//        setTileEntityNums(event.getEntity().getLocation().getChunk().getTileEntities().length);
         setChunkX(event.getEntity().getLocation().getChunk().getX());
         setChunkZ(event.getEntity().getLocation().getChunk().getZ());
     }

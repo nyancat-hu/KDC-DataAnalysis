@@ -12,17 +12,4 @@ public class MobRemoveBean extends MobBean{
         this.isSpawn = isSpawn;
     }
 
-    @Override
-    public String toString() {
-        return "MobRemoveBean{" +
-                "eventName='" + eventName + '\'' +
-                ", entityName='" + entityName + '\'' +
-                ", serverName='" + serverName + '\'' +
-                ", isSpawn=" + isSpawn +
-                ", entityNums=" + entityNums +
-                ", tileEntityNums=" + tileEntityNums +
-                ", chunkX=" + chunkX +
-                ", chunkZ=" + chunkZ +
-                '}';
-    }
 }
