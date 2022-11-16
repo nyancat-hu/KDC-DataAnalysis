@@ -35,22 +35,22 @@ public class WebConfig {
     @Value("${pravega.uri}")
     private String uri;
 
-    @Bean
-    public EventStreamWriter<String> getStreamWriter(){
-        URI HOST = URI.create(uri);
-        StreamManager streamManager = StreamManager.create(HOST);
-        streamManager.createScope(SCOPE_NAME);
-        streamManager.createStream(SCOPE_NAME,
-                STREAM_NAME,
-                StreamConfiguration.builder().build());
-        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(
-                SCOPE_NAME,
-                ClientConfig.builder().controllerURI(HOST).build());
-        return clientFactory.createEventWriter(
-                STREAM_NAME,
-                new JavaSerializer<>(),
-                EventWriterConfig.builder().build());
-    }
+//    @Bean
+//    public EventStreamWriter<String> getStreamWriter(){
+//        URI HOST = URI.create(uri);
+//        StreamManager streamManager = StreamManager.create(HOST);
+//        streamManager.createScope(SCOPE_NAME);
+//        streamManager.createStream(SCOPE_NAME,
+//                STREAM_NAME,
+//                StreamConfiguration.builder().build());
+//        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(
+//                SCOPE_NAME,
+//                ClientConfig.builder().controllerURI(HOST).build());
+//        return clientFactory.createEventWriter(
+//                STREAM_NAME,
+//                new JavaSerializer<>(),
+//                EventWriterConfig.builder().build());
+//    }
 
 
     /**

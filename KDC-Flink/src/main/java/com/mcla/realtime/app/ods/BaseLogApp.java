@@ -1,18 +1,8 @@
 package com.mcla.realtime.app.ods;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.mcla.realtime.common.PravegaConstant;
 import com.mcla.realtime.utils.MyKafkaUtil;
-import com.mcla.realtime.utils.PravegaUtils;
-import io.pravega.client.stream.*;
-import io.pravega.connectors.flink.FlinkPravegaReader;
-import io.pravega.connectors.flink.PravegaConfig;
-import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.common.functions.RichMapFunction;
-import org.apache.flink.api.common.serialization.SimpleStringSchema;
-import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
@@ -23,7 +13,6 @@ import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 
-import java.net.URI;
 
 public class BaseLogApp {
 
@@ -36,7 +25,7 @@ public class BaseLogApp {
     public static void main(String[] args) throws Exception {
         //TODO 1.从Kafka中读取数据
         String topic = "ods_base_log";
-        String groupId = "base_db_app_group";
+        String groupId = "base_log_app_group";
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
@@ -70,7 +59,6 @@ public class BaseLogApp {
                         boolean isItem = jsonObj.containsKey("itemName");
                         boolean isTileEntity = jsonObj.containsKey("blockName");
                         boolean isEntity = jsonObj.containsKey("entityName");
-
                         //将json格式转换为字符串，方便向侧输出流输出以及向消息队列中写入
                         String dataStr = jsonObj.toString();
 

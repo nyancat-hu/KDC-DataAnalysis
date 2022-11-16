@@ -13,8 +13,8 @@ import java.util.Map;
 
 @Service
 public class LogServiceImpl {
-    @Autowired
-    EventStreamWriter<String> writer;
+//    @Autowired
+//    EventStreamWriter<String> writer;
 
     @Autowired //注入
     KafkaTemplate kafkaTemplate;
@@ -25,7 +25,7 @@ public class LogServiceImpl {
 
         Object obj = JSONArray.toJSON(map);
         // 输出数据到pravega
-        writer.writeEvent("routing-key",obj.toString());
+//        writer.writeEvent("routing-key",obj.toString());
         // 打印到控制台
 //        System.out.println(obj.toString());
         // 向kafka发送数据

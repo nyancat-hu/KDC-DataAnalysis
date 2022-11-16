@@ -8,19 +8,6 @@ package com.mcla.kdccollectorbukkit.bean;
  * @Version: 1.0
  */
 public class ItemPickUpBean extends ItemBean{
-    @Override
-    public String toString() {
-        return "ItemPickUpBean{" +
-                "eventName='" + eventName + '\'' +
-                ", itemName='" + itemName + '\'' +
-                ", serverName='" + serverName + '\'' +
-                ", isSpawn=" + isSpawn +
-                ", entityNums=" + entityNums +
-                ", tileEntityNums=" + tileEntityNums +
-                ", chunkX=" + chunkX +
-                ", chunkZ=" + chunkZ +
-                '}';
-    }
 
     public ItemPickUpBean(boolean isSpawn) {
         this.isSpawn = isSpawn;
