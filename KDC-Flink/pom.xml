@@ -12,16 +12,50 @@
 
     <artifactId>KDC-Flink</artifactId>
 
-
-
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <flink.version>1.13.6</flink.version>
         <scala.version>2.12</scala.version>
+        <djl.version>0.13.0</djl.version>
     </properties>
 
+    <!--DPC-->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>ai.djl</groupId>
+                <artifactId>bom</artifactId>
+                <version>${djl.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    <!--DPC-->
+
     <dependencies>
+
+        <!--DPC-->
+        <dependency>
+            <groupId>ai.djl</groupId>
+            <artifactId>api</artifactId>
+            <version>${djl.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/ai.djl.pytorch/pytorch-engine -->
+        <dependency>
+            <groupId>ai.djl.pytorch</groupId>
+            <artifactId>pytorch-engine</artifactId>
+            <version>${djl.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/ai.djl.pytorch/pytorch-native-auto -->
+        <dependency>
+            <groupId>ai.djl.pytorch</groupId>
+            <artifactId>pytorch-native-auto</artifactId>
+            <version>1.9.0</version>
+        </dependency>
+        <!--DPC-->
+
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-java</artifactId>
@@ -38,7 +72,6 @@
             <groupId>io.pravega</groupId>
             <artifactId>pravega-connectors-flink-1.13_2.12</artifactId>
             <version>0.11.0</version>
-<!--            <scope>provided</scope>-->
         </dependency>
     </dependencies>
 
@@ -69,7 +102,8 @@
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <!--如果要打包的话，这里要换成对应的 main class-->
-                                    <mainClass>com.mcla.realtime.app.BaseLogApp</mainClass>
+<!--                                    <mainClass>com.mcla.realtime.app.BaseLogApp</mainClass>-->
+                                    <mainClass>com.mcla.realtime.app.DPCTestApp</mainClass>
                                 </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                                     <resource>reference.conf</resource>
