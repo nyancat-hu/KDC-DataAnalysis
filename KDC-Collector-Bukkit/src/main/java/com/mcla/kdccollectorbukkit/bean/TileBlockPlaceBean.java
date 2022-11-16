@@ -11,18 +11,4 @@ public class TileBlockPlaceBean extends TileBean{
     public TileBlockPlaceBean(boolean b) {
         this.isPlace = b;
     }
-
-    @Override
-    public String toString() {
-        return "TileBlockPlaceBean{" +
-                "eventName='" + eventName + '\'' +
-                ", blockName='" + blockName + '\'' +
-                ", serverName='" + serverName + '\'' +
-                ", isPlace=" + isPlace +
-                ", entityNums=" + entityNums +
-                ", tileEntityNums=" + tileEntityNums +
-                ", chunkX=" + chunkX +
-                ", chunkZ=" + chunkZ +
-                '}';
-    }
 }

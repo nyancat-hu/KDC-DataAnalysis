@@ -8,19 +8,6 @@ package com.mcla.kdccollectorbukkit.bean;
  * @Version: 1.0
  */
 public class ItemRemoveBean extends ItemBean{
-    @Override
-    public String toString() {
-        return "ItemRemoveBean{" +
-                "eventName='" + eventName + '\'' +
-                ", itemName='" + itemName + '\'' +
-                ", serverName='" + serverName + '\'' +
-                ", isSpawn=" + isSpawn +
-                ", entityNums=" + entityNums +
-                ", tileEntityNums=" + tileEntityNums +
-                ", chunkX=" + chunkX +
-                ", chunkZ=" + chunkZ +
-                '}';
-    }
 
     public ItemRemoveBean(boolean isSpawn) {
         this.isSpawn = isSpawn;

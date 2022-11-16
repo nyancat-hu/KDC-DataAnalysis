@@ -10,22 +10,16 @@ package com.mcla.kdccollectorbukkit.bean;
 public class MobExplodeBean extends MobBean{
     private float yield;
 
+    public float getYield() {
+        return yield;
+    }
+
     public MobExplodeBean(boolean b) {
-        this.isSpawn = false;
+        this.isSpawn = b;
     }
 
     public void setYield(float yield) {
         this.yield = yield;
     }
 
-    @Override
-    public String toString() {
-        return "MobExplodeBean{" +
-                "eventName='" + eventName + '\'' +
-                ", entityName='" + entityName + '\'' +
-                ", serverName='" + serverName + '\'' +
-                ", isSpawn=" + isSpawn +
-                ", yield=" + yield +
-                '}';
-    }
 }

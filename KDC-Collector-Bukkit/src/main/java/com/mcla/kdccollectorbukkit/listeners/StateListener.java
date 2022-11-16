@@ -10,6 +10,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.scheduler.BukkitScheduler;
 
+import java.util.logging.LogRecord;
+
 /**
  * @Description: 监听服务器状态以发送至Web端的监听器
  * @ClassName: StateListener
@@ -19,14 +21,14 @@ import org.bukkit.scheduler.BukkitScheduler;
  */
 public class StateListener implements Listener {
     @EventHandler
-    public void onEnable(PluginEnableEvent event) {
-        // 创建一个300tick执行的匿名任务
+    public void onPluginInit(PluginEnableEvent event) {
+        // 创建一个20tick执行的匿名任务
         BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
         scheduler.scheduleSyncRepeatingTask(KDCCollectorBukkit.snowkPlugin, () -> {
                 // 执行定时任务
                 StateBean spt = new StateBean();
-                System.out.println(JsonUtil.praseJson(spt));
+                Bukkit.getServer().broadcast(JsonUtil.praseJson(spt),"*");
                 HttpUtil.postJson(KDCCollectorBukkit.targetUrl, JsonUtil.praseJson(spt));
-        }, 0L, 20L);
+        }, 0L, 50L);
     }
 }

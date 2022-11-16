@@ -9,19 +9,6 @@ package com.mcla.kdccollectorbukkit.bean;
  */
 public class ItemDropBean extends ItemBean{
 
-    @Override
-    public String toString() {
-        return "ItemDropBean{" +
-                "eventName='" + eventName + '\'' +
-                ", itemName='" + itemName + '\'' +
-                ", serverName='" + serverName + '\'' +
-                ", isSpawn=" + isSpawn +
-                ", entityNums=" + entityNums +
-                ", tileEntityNums=" + tileEntityNums +
-                ", chunkX=" + chunkX +
-                ", chunkZ=" + chunkZ +
-                '}';
-    }
 
     public ItemDropBean(boolean isSpawn) {
         this.isSpawn = isSpawn;

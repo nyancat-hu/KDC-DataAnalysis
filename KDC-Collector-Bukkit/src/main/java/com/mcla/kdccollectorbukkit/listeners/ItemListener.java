@@ -28,6 +28,7 @@ public class ItemListener implements Listener {
     public void itemSpawn(ItemSpawnEvent event) {
         ItemDropBean mb = new ItemDropBean(true);
         mb.setEssentialInfo(event);
+        mb.setItemAmount(event.getEntity().getItemStack().getAmount());
         HttpUtil.postJson(KDCCollectorBukkit.targetUrl, JsonUtil.praseJson(mb));
     }
 
@@ -36,6 +37,7 @@ public class ItemListener implements Listener {
         ItemPickUpBean mb = new ItemPickUpBean(false);
         mb.setEssentialInfo(event);
         mb.setItemName(event.getItem().getName());
+        mb.setItemAmount(event.getItem().getItemStack().getAmount());
         HttpUtil.postJson(KDCCollectorBukkit.targetUrl, JsonUtil.praseJson(mb));
     }
 
@@ -43,6 +45,7 @@ public class ItemListener implements Listener {
     public void itemRemove(ItemDespawnEvent event) {
         ItemRemoveBean mb = new ItemRemoveBean(false);
         mb.setEssentialInfo(event);
+        mb.setItemAmount(event.getEntity().getItemStack().getAmount());
         HttpUtil.postJson(KDCCollectorBukkit.targetUrl, JsonUtil.praseJson(mb));
     }
 }

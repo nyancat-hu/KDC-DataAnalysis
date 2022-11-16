@@ -16,7 +16,6 @@ import org.bukkit.inventory.EntityEquipment;
 public abstract class MobBean {
     String eventName;
     String entityName;
-//    Location location;
     String serverName;
 
     public int getX() {
@@ -56,8 +55,16 @@ public abstract class MobBean {
     int z;
     String world;
     boolean isSpawn;
-    int entityNums;
-    int tileEntityNums;
+    String tag;
+
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
+    }
+
     int chunkX;
     int chunkZ;
 
@@ -70,25 +77,9 @@ public abstract class MobBean {
 
         setEntityName(event.getEntity().getName());
         setEventName(event.getEventName());
-        setEntityNums(event.getEntity().getLocation().getChunk().getEntities().length);
-        setTileEntityNums(event.getEntity().getLocation().getChunk().getTileEntities().length);
+        setTag(String.valueOf(event.getEntity().hashCode()));
         setChunkX(event.getEntity().getLocation().getChunk().getX());
         setChunkZ(event.getEntity().getLocation().getChunk().getZ());
-    }
-    public int getEntityNums() {
-        return entityNums;
-    }
-
-    public void setEntityNums(int entityNums) {
-        this.entityNums = entityNums;
-    }
-
-    public int getTileEntityNums() {
-        return tileEntityNums;
-    }
-
-    public void setTileEntityNums(int tileEntityNums) {
-        this.tileEntityNums = tileEntityNums;
     }
 
     public int getChunkX() {
