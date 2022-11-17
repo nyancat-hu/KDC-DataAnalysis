@@ -1,10 +1,8 @@
 package com.mcla.kdccollectorbukkit;
 
 import com.mcla.kdccollectorbukkit.config.Config;
-import com.mcla.kdccollectorbukkit.listeners.ItemListener;
-import com.mcla.kdccollectorbukkit.listeners.MobListener;
-import com.mcla.kdccollectorbukkit.listeners.StateListener;
-import com.mcla.kdccollectorbukkit.listeners.TileListener;
+import com.mcla.kdccollectorbukkit.listeners.*;
+import com.mcla.kdccollectorbukkit.utils.HikariCPUtils;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class KDCCollectorBukkit extends JavaPlugin {
@@ -22,6 +20,8 @@ public final class KDCCollectorBukkit extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new ItemListener(), this);
         getServer().getPluginManager().registerEvents(new TileListener(), this);
         getServer().getPluginManager().registerEvents(new StateListener(), this);
+        getServer().getPluginManager().registerEvents(new LimitListener(), this);
+        HikariCPUtils.configsqlConnectionPool();
     }
 
     @Override

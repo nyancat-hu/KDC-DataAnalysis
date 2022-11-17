@@ -1,5 +1,7 @@
 package com.mcla.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.pravega.client.stream.EventStreamWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -15,6 +17,9 @@ import java.util.Map;
 public class LogServiceImpl {
 //    @Autowired
 //    EventStreamWriter<String> writer;
+
+    @Autowired
+    ObjectMapper om;
 
     @Autowired //注入
     KafkaTemplate kafkaTemplate;
@@ -34,5 +39,13 @@ public class LogServiceImpl {
 //        log.info(jsonLog);
         //3.将生成的日主发送到kafka对应的主题中
 //        kafkaTemplate.send("ods_base_log",jsonLog);
+    }
+    public void printLog(Object ob){
+        // 向kafka发送数据
+        try {
+            kafkaTemplate.send("ods_base_log",om.writeValueAsString(ob));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
     }
 }
