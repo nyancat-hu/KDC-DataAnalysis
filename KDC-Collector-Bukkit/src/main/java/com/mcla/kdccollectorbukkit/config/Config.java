@@ -34,6 +34,12 @@ public class Config {
     public static double getDouble(String label) {
         return KDCCollectorBukkit.snowkPlugin.getConfig().getDouble(label);
     }
+    public static long getLong(String label) {
+        return KDCCollectorBukkit.snowkPlugin.getConfig().getLong(label);
+    }
+    public static int getInt(String label) {
+        return KDCCollectorBukkit.snowkPlugin.getConfig().getInt(label);
+    }
     public static String getString(String label) {
         return KDCCollectorBukkit.snowkPlugin.getConfig().getString(label).replaceAll("&", "¡ì");
     }

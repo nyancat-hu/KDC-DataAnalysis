@@ -10,6 +10,7 @@ import com.mcla.kdccollectorbukkit.utils.JsonUtil;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
@@ -35,7 +36,7 @@ public class TileListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
-    public void itemPickUp(BlockDamageEvent event) {
+    public void itemPickUp(BlockBreakEvent event) {
         if (!event.getBlock().getState().getClass().getName().endsWith("CraftBlockState")){
             // 如果这是一个tileEntity，则继续执行下去
             TileBlockDamageBean mb = new TileBlockDamageBean(false);
