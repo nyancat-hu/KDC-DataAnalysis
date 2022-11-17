@@ -10,13 +10,13 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
 
-public class EntityCleanTask extends BukkitRunnable {
+public class TileEntityCleanTask extends BukkitRunnable {
     public static volatile boolean isCleaning = false;
 
     private final List<String> chunkList = new LinkedList<>();
 
 
-    public EntityCleanTask(DensityBean entityDb) {
+    public TileEntityCleanTask(DensityBean entityDb) {
         isCleaning = true;
         String[] splitPosition = entityDb.getCenterPosition().split(";");
         String[] splitChunk = entityDb.getChunkPosition().split(";");
@@ -27,7 +27,7 @@ public class EntityCleanTask extends BukkitRunnable {
             Arrays.stream(Bukkit.getWorld("world").getChunkAt(Integer.parseInt(split[0]),Integer.parseInt(split[1])).getEntities())
             .filter(entity -> (entity instanceof Player)&&split[2].equals("Y"))
             .forEach(entity -> {
-                entity.sendMessage("§b检测到您附近生物密集，将在 15 秒后进行进行§a§l 生物清理 §b...");
+                entity.sendMessage("§b检测到您附近状态方块密集，将在 15 秒后进行进行§a§l 状态方块清理 §b...");
                 for (String position : splitPosition) {
                     entity.sendMessage("        - §c§l密集中心坐标点§b x-y: §a§l[§e§l " + position + "§a§l"  + " ]");
                 }
@@ -64,7 +64,7 @@ public class EntityCleanTask extends BukkitRunnable {
                         types.put(type, list);
                     });
                     types.forEach((key, value1) -> {
-                        int value = 5;
+                        int value = 10;
                         if (value1.size() < value) {
                             return;
                         }

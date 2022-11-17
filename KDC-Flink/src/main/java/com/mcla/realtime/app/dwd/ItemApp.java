@@ -27,7 +27,7 @@ public class ItemApp {
      *  本程序用来统计以下几个跟物品有关的指标
      *  1.统计某种物品当前时间的数量
      *  2.输出物品的当前坐标，如果物品被销毁，同样输出当前坐标
-     *  3.统计物品密集的中心坐标点，输出该物品属于哪个chunk
+     *  3.统计物品密集的中心坐标点，输出该坐标点属于哪个chunk
      * @author jhu
      * @date 2022/11/15 20:07
      */
@@ -78,7 +78,7 @@ public class ItemApp {
                     }
 
                     @Override
-                    public void close() throws Exception {
+                    public void close() {
                         lastItemNums.clear();
                     }
                 }
