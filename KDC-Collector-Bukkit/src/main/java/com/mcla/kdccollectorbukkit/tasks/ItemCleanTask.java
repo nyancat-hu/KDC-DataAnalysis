@@ -1,16 +1,17 @@
 package com.mcla.kdccollectorbukkit.tasks;
 
+import com.mcla.kdccollectorbukkit.bean.DensityBean;
+import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.text.MessageFormat;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @Description:
@@ -20,53 +21,70 @@ import java.util.Set;
  * @Version: 1.0
  */
 public class ItemCleanTask extends BukkitRunnable {
-//    private Map<World, Set<Item>> data;
-//
-//    ItemCleanTask(Map<World, Set<Item>> data) {
-//        this.data = data;
-//    }
+    public static volatile boolean isCleaning = false;
+
+    private final List<String> chunkList = new LinkedList<>();
+
+
+    public ItemCleanTask(DensityBean itemDb) {
+        isCleaning = true;
+        String[] splitPosition = itemDb.getCenterPosition().split(";");
+        String[] splitChunk = itemDb.getChunkPosition().split(";");
+        this.chunkList.addAll(Arrays.asList(splitChunk));
+        //在此处加一下广播，广播给区块中的每个玩家
+        for (String s : splitChunk) {
+            String[] split = s.split(",");
+            Arrays.stream(Bukkit.getWorld("world").getChunkAt(Integer.parseInt(split[0]),Integer.parseInt(split[1])).getEntities())
+                    .filter(entity -> (entity instanceof Player)&&split[2].equals("Y"))
+                    .forEach(entity -> {
+                        entity.sendMessage("§b检测到您附近掉落物密集，请及时拾取，将在 15 秒后进行进行§a§l 物品清理 §b...");
+                        for (String position : splitPosition) {
+                            entity.sendMessage("        - §c§l物品密集中心坐标点§b x-y: §a§l[§e§l " + position + "§a§l"  + " ]");
+                        }
+                    });
+        }
+    }
 
     @Override
     public void run() {
-//        Set<Item> cleanItem = new HashSet<>();
-//        data.forEach((key, itemSet) -> itemSet.forEach(item -> {
-//            ItemStack itemStack = item.getItemStack();
-//            if (Main.getInstance().getConfigManager().isCheckValueEnabled()) {
-//                if (!Main.getInstance().getScriptManager().isNeedToClean(item)) {
-//                    return;
-//                }
-//            }
-//            if (isInBlackList(itemStack)) {
-//                return;
-//            }
-//            cleanItem.add(item);
-//        }));
-//        new BukkitRunnable() {
-//            @Override
-//            public void run() {
-//                cleanItem.forEach(Entity::remove);
-//                if (Main.getInstance().getConfigManager().isEnableCleanBroadcast()) {
-//                    Main.getInstance().getBroadcaster().broadcast(MessageFormat.format(Main.getInstance().getConfigManager().getCleanDoneMessage(), String.valueOf(cleanItem.size())));
-//                }
-//            }
-//        }.runTask(Main.getInstance());
-//        Main.getInstance().getDropSkipManager().clear();
+        // 下面这一段要改成只对指定区块进行清理
+        Bukkit.getWorlds().stream()
+                .filter(world -> world.getName().equals("world"))
+                .flatMap(world -> Arrays.stream(world.getLoadedChunks()))
+                .filter(chunk -> {
+                    for (String s : chunkList) {
+                        String[] split = s.split(",");
+                        if((chunk.getX() == Integer.parseInt(split[0]) && chunk.getZ() == Integer.parseInt(split[1]))&&split[2].equals("Y")) return true;
+                    }
+                    return false;
+                })
+                .map(chunk -> Arrays.asList(chunk.getEntities()))
+                .forEach(entities -> {
+                    Map<EntityType, List<Entity>> types = new HashMap<>();
+                    entities.forEach(entity -> {
+                        EntityType type = entity.getType();
+                        List<Entity> list = types.get(type);
+                        if (list == null) {
+                            list = new ArrayList<>();
+                        }
+                        if(entity instanceof Item){
+                            list.add(entity);
+                        }
+                        types.remove(type);
+                        types.put(type, list);
+                    });
+                    types.forEach((key, value1) -> {
+                        int value = 2;
+                        if (value1.size() < value) {
+                            return;
+                        }
+                        int toClean = value1.size() - value;
+                        for (int i = 0; i < toClean; i++) {
+                            value1.get(i).remove();
+                        }
+                    });
+                    Bukkit.getServer().broadcastMessage("§b已清理区块掉落物，清理数量为：" + entities.size());
+                });
+        isCleaning = false;
     }
-
-//    private boolean isInBlackList(ItemStack itemStack) {
-//        List<String> blackList = Main.getInstance().getConfigManager().getBlackList();
-//        for (String black : blackList) {
-//            if (black.startsWith("@")) {
-//                String blackType = black.substring(1);
-//                if (itemStack.getType().toString().contains(blackType)) {
-//                    return true;
-//                }
-//            } else {
-//                if (itemStack.getType().toString().equalsIgnoreCase(black)) {
-//                    return true;
-//                }
-//            }
-//        }
-//        return false;
-//    }
 }
