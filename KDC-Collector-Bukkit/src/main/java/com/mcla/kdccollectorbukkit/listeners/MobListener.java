@@ -38,7 +38,6 @@ public class MobListener implements Listener {
 
             HttpUtil.postJson(KDCCollectorBukkit.targetUrl, JsonUtil.praseJson(mb));
         }
-
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
