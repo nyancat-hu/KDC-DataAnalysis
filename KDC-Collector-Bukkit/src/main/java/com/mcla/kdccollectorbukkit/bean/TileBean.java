@@ -72,7 +72,7 @@ public abstract class TileBean {
         setWorld(event.getBlock().getLocation().getWorld().getName());
         setBlockName(event.getBlock().toString());
         setEventName(event.getEventName());
-        setTag(String.valueOf(event.getBlock().hashCode()));
+        setTag(event.getBlock().getClass().getName() + "@" + Integer.toHexString(event.getBlock().hashCode()));
         setChunkX(event.getBlock().getLocation().getChunk().getX());
         setChunkZ(event.getBlock().getLocation().getChunk().getZ());
     }

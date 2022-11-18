@@ -133,7 +133,7 @@ public abstract class ItemBean {
         setWorld(event.getEntity().getLocation().getWorld().getName());
         setItemName(event.getEntity().getName());
         setEventName(event.getEventName());
-        setTag(String.valueOf(event.getEntity().hashCode()));
+        setTag(event.getEntity().getClass().getName() + "@" + Integer.toHexString(event.getEntity().hashCode()));
 //        setEntityNums(event.getEntity().getLocation().getChunk().getEntities().length);
 //        setTileEntityNums(event.getEntity().getLocation().getChunk().getTileEntities().length);
         setChunkX(event.getEntity().getLocation().getChunk().getX());

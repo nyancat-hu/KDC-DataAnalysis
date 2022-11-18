@@ -36,6 +36,7 @@ public class ItemListener implements Listener {
     public void itemPickUp(EntityPickupItemEvent event) {
         ItemPickUpBean mb = new ItemPickUpBean(false);
         mb.setEssentialInfo(event);
+        mb.setTag(event.getItem().getClass().getName() + "@" + Integer.toHexString(event.getItem().hashCode()));
         mb.setItemName(event.getItem().getName());
         mb.setItemAmount(event.getItem().getItemStack().getAmount());
         HttpUtil.postJson(KDCCollectorBukkit.targetUrl, JsonUtil.praseJson(mb));
