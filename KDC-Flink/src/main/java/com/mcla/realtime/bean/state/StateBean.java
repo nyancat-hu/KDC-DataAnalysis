@@ -2,9 +2,21 @@ package com.mcla.realtime.bean.state;
 
 import com.alibaba.fastjson.annotation.JSONField;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 public class StateBean{
+
+	@Override
+	public String toString() {
+		return "StateBean{" +
+				"tpsLast5Mins=" + tpsLast5Mins +
+				", usagelastMin=" + usagelastMin +
+				", tpsLast10Secs=" + tpsLast10Secs +
+				", gc=" + gc +
+				", time='" + time + '\'' +
+				'}';
+	}
 
 	@JSONField(name="tpsLast5Mins")
 	private Object tpsLast5Mins;
@@ -17,6 +29,16 @@ public class StateBean{
 
 	@JSONField(name="gc")
 	private Map<String, Map<Long,Double>> gc;
+
+	private String time;
+
+	public String getTime() {
+		return time;
+	}
+
+	public void setTime(String time) {
+		this.time = time;
+	}
 
 	public void setTpsLast5Mins(Object tpsLast5Mins){
 		this.tpsLast5Mins = tpsLast5Mins;
