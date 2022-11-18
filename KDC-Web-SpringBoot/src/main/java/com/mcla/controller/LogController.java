@@ -19,9 +19,10 @@ public class LogController {
         logService.printLog(map);
         return "success";
     }
-    @RequestMapping("/log/state")
+    @RequestMapping("/state")
     public String logState(@RequestBody StateBean sb){
         logService.printLog(sb);
+//        System.out.println(sb);
         return "success";
     }
 }

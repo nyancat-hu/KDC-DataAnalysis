@@ -1,10 +1,10 @@
-package com.mcla.bean;
+package com.mcla.realtime.bean.state;
 
 import com.alibaba.fastjson.annotation.JSONField;
 
 import java.util.Map;
 
-public class StateBean {
+public class StateBean{
 
 	@JSONField(name="tpsLast5Mins")
 	private Object tpsLast5Mins;
@@ -14,16 +14,6 @@ public class StateBean {
 
 	@JSONField(name="tpsLast10Secs")
 	private Object tpsLast10Secs;
-
-	@Override
-	public String toString() {
-		return "StateBean{" +
-				"tpsLast5Mins=" + tpsLast5Mins +
-				", usagelastMin=" + usagelastMin +
-				", tpsLast10Secs=" + tpsLast10Secs +
-				", gc=" + gc +
-				'}';
-	}
 
 	@JSONField(name="gc")
 	private Map<String, Map<Long,Double>> gc;
