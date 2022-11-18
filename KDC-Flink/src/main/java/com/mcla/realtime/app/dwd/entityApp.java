@@ -1,22 +1,23 @@
 package com.mcla.realtime.app.dwd;
 
 import com.alibaba.fastjson.JSON;
+import com.mcla.realtime.bean.DbscanBean;
 import com.mcla.realtime.bean.EntityBean;
-import com.mcla.realtime.bean.ItemBean;
+import com.mcla.realtime.operator.DBscanWindowProcessor;
+import com.mcla.realtime.operator.TableCLeanProcessor;
 import com.mcla.realtime.utils.MyKafkaUtil;
 import org.apache.flink.api.common.functions.FlatMapFunction;
-import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.state.MapState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
-import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
+import org.apache.flink.connector.jdbc.JdbcExecutionOptions;
 import org.apache.flink.connector.jdbc.JdbcSink;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
@@ -24,12 +25,12 @@ import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
-import org.apache.flink.streaming.api.functions.ProcessFunction;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
+import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 
-import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
@@ -72,7 +73,7 @@ public class entityApp {
             public void open(Configuration parameters) throws Exception {
                 //获取上下文参数
                 lastEntityNums = getRuntimeContext().getState(new ValueStateDescriptor<Long>("last-item", Long.class));
-                alive = getRuntimeContext().getMapState(new MapStateDescriptor<String, Tuple3<String, String, String>>("Entity-alive", Types.STRING, Types.TUPLE(Types.STRING, Types.STRING, Types.STRING)));
+                alive = getRuntimeContext().getMapState(new MapStateDescriptor<>("Entity-alive", Types.STRING, Types.TUPLE(Types.STRING, Types.STRING, Types.STRING)));
             }
 
             @Override
@@ -85,7 +86,7 @@ public class entityApp {
                 if (value.getIsSpawn().equals("true")) {
                     lastEntityNums.update(valueLast + 1L);
                     alive.put(value.getTag(), Tuple3.of(value.getX(), value.getY(), value.getZ()));
-                    Iterator iterator = alive.iterator();
+                    Iterator<Map.Entry<String, Tuple3<String, String, String>>> iterator = alive.iterator();
                     while (iterator.hasNext()) {
                         index.add(iterator.next().toString().split("=")[1]);
 
@@ -97,13 +98,13 @@ public class entityApp {
                         lastEntityNums.update(valueLast - 1L);
                     }
                     alive.remove(value.getTag());
-                    Iterator iterator = alive.iterator();
+                    Iterator<Map.Entry<String, Tuple3<String, String, String>>> iterator = alive.iterator();
                     while (iterator.hasNext()) {
                         index.add(iterator.next().toString().split("=")[1]);
                     }
                     context.output(tag, index);
                 }
-                collector.collect(new Tuple2<String, Long>(value.getEntityName(), lastEntityNums.value()));
+                collector.collect(new Tuple2<>(value.getEntityName(), lastEntityNums.value()));
             }
 
 
@@ -116,43 +117,53 @@ public class entityApp {
         });
 
         // 输出每类掉落物品当前的数量
-        tuple2EntityBeanKeyedDS.print();
-//        tuple2EntityBeanKeyedDS.addSink(
-//                JdbcSink.sink(
+//        tuple2EntityBeanKeyedDS.print();
+        tuple2EntityBeanKeyedDS
+                .filter(str->str.f1!=null)
+                .addSink(
+                JdbcSink.sink(
+                        "INSERT into NumsCount(Name,Nums,Type) values(?, ? ,?) on DUPLICATE key UPDATE Nums = ?",//名字重复时更新
 //                        "insert into NumsCount(Name,Nums,Type) values (?, ? ,?)",
-//                        (statement, str) -> {
-//                            statement.setString(1, str.f0);
-//                            statement.setString(2, str.f1.toString());
-//                            statement.setString(3,String.format("%d", str.hashCode()));
-//                        },
-//                        new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-//                                .withUrl("jdbc:mysql://113.101.28.133:60005/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
-//                                .withDriverName("com.mysql.jdbc.Driver")
-//                                .withUsername("root")
-//                                .withPassword("430525")
-//                                .build()
-//                )
-//        );
+                        (statement, str) -> {
+                            statement.setString(1, str.f0);
+                            statement.setString(2, str.f1.toString());
+                            statement.setString(3, "entity");
+                            statement.setString(4, str.f1.toString());
+                        },
+                        JdbcExecutionOptions.builder()
+                                .withBatchSize(20)
+                                .withBatchIntervalMs(200)
+                                .withMaxRetries(5)
+                                .build(),
+                        new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
+                                .withUrl("jdbc:mysql://113.101.28.133:60005/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
+                                .withDriverName("com.mysql.jdbc.Driver")
+                                .withUsername("root")
+                                .withPassword("430525")
+                                .build()
+                )
+        );
 
         //输出当前存活生物的下标
         DataStream<ArrayList<String>> sideOutput = tuple2EntityBeanKeyedDS.getSideOutput(tag);
-        sideOutput
-                .flatMap(new FlatMapFunction<ArrayList<String>, String>() {
-                    @Override
-                    public void flatMap(ArrayList<String> strings, Collector<String> collector) throws Exception {
-                        for (String tuple : strings) {
-                            collector.collect(tuple);
-                        }
+        sideOutput.flatMap((FlatMapFunction<ArrayList<String>, String>) (strings, collector) -> {
+                    for (String tuple : strings) {
+                        collector.collect(tuple);
                     }
-                })
+                }).returns(TypeInformation.of(String.class))
+                .countWindowAll(50)
+                .process(new TableCLeanProcessor("EntityAlive"))
                 .addSink(JdbcSink.sink(
-                        "insert into EntityAlive (AliveHashCode,AliveLocation) values (?, ?)",
+                                "insert into EntityAlive (AliveHashCode,AliveLocation) values (?, ?)",
                         (statement, str) -> {
-//                            statement.setString(1, String.format("%d", str.hashCode()));
-//                            statement.setString(2, str);
-                            statement.setString(1, "及你太美");
-                            statement.setString(2, "你干嘛");
+                            statement.setString(1, String.format("%d", str.hashCode()));
+                            statement.setString(2, str);
                         },
+                        JdbcExecutionOptions.builder()
+                                .withBatchSize(50)
+                                .withBatchIntervalMs(200)
+                                .withMaxRetries(5)
+                                .build(),
                         new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
                                 .withUrl("jdbc:mysql://topview102:3306/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
                                 .withDriverName("com.mysql.jdbc.Driver")
@@ -161,12 +172,37 @@ public class entityApp {
                                 .build()
                         )
                 );
-        sideOutput.print();
 
-        //输出当前存活的生物
+        //输出聚类中心点
+        sideOutput.flatMap((FlatMapFunction<ArrayList<String>, DbscanBean>) (strings, collector) -> {
+            for (String tuple : strings) {
+                String[] replace = tuple.replace("(", "").replace(")", "").split(",");
+                collector.collect(new DbscanBean(Double.parseDouble(replace[0]),Double.parseDouble(replace[1]),Double.parseDouble(replace[2]),0));
+            }
+        }).returns(TypeInformation.of(DbscanBean.class))
+                .keyBy(data -> "DontChange")
+                .window(TumblingProcessingTimeWindows.of(Time.seconds(10L)))
+                .process(new DBscanWindowProcessor())
+                .addSink(JdbcSink.sink(
+                        "UPDATE DensityTable SET CenterPosition = ?,ChunkLocation = ?",
+                        (statement, str) -> {
+                            statement.setString(1, String.format("%d", str.hashCode()));
+                            statement.setString(2, str);
+                        },
+                        JdbcExecutionOptions.builder()
+                                .withBatchSize(1)
+                                .withBatchIntervalMs(200)
+                                .withMaxRetries(5)
+                                .build(),
+                        new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
+                                .withUrl("jdbc:mysql://topview102:3306/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
+                                .withDriverName("com.mysql.jdbc.Driver")
+                                .withUsername("root")
+                                .withPassword("430525")
+                                .build()
+                        )
+                );
 
-
-        //TODO 4.输出物品的当前坐标，以及物品当前状态是被销毁还是被创建
 
         env.execute("Entity Module");
     }
