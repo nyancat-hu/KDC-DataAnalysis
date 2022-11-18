@@ -74,9 +74,7 @@ public class ItemBean{
 		return itemAmount;
 	}
 
-	public String getX(){
-		return x;
-	}
+	public String getX(){ return x; }
 
 	public String getEventName(){
 		return eventName;
