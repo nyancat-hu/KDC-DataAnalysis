@@ -8,6 +8,9 @@ import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 /**
  * @Description:
  * @ClassName: StateApp
@@ -30,10 +33,15 @@ public class StateApp {
         //TODO 2.将Item数据转为JavaBean
         SingleOutputStreamOperator<StateBean> stateBeanDS = jsonStrDS.map((jsonStr) -> JSON.parseObject(jsonStr, StateBean.class));
 
+        SingleOutputStreamOperator<StateBean> timeDS = stateBeanDS.map(state -> {
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
+            LocalDateTime now = LocalDateTime.now();
+            state.setTime(now.format(dateTimeFormatter));
+            return state;
+        });
 
-        stateBeanDS.print();
-
-        //输出当前存活的生物
+        timeDS.print();
+        // 按时间戳写入当前状态到数据库
 
 
         //TODO 4.输出物品的当前坐标，以及物品当前状态是被销毁还是被创建

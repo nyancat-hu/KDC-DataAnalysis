@@ -29,6 +29,6 @@ public class StateListener implements Listener {
                 StateBean spt = new StateBean();
 //                Bukkit.getServer().broadcastMessage(JsonUtil.praseJson(spt));
                 HttpUtil.postJson(KDCCollectorBukkit.targetUrl.split("log")[0] + "state", JsonUtil.praseJson(spt));
-        }, 0L, 50L);
+        }, 0L, 200L);
     }
 }
