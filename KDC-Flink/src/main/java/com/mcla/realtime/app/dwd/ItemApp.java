@@ -3,7 +3,6 @@ package com.mcla.realtime.app.dwd;
 import com.alibaba.fastjson.JSON;
 import com.mcla.realtime.bean.ItemBean;
 import com.mcla.realtime.utils.MyKafkaUtil;
-import jdk.internal.org.objectweb.asm.tree.analysis.Value;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
