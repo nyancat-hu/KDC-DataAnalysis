@@ -77,7 +77,7 @@ public abstract class MobBean {
 
         setEntityName(event.getEntity().getName());
         setEventName(event.getEventName());
-        setTag(String.valueOf(event.getEntity().hashCode()));
+        setTag(event.getEntity().getClass().getName() + "@" + Integer.toHexString(event.getEntity().hashCode()));
         setChunkX(event.getEntity().getLocation().getChunk().getX());
         setChunkZ(event.getEntity().getLocation().getChunk().getZ());
     }
