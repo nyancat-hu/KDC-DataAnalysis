@@ -126,9 +126,7 @@ public class TileEntityBean {
         return z;
     }
 
-    public String getTag(){
-        return tag;
-    }
+    public String getTag(){ return tag; }
 
     public String getChunkX(){
         return chunkX;
