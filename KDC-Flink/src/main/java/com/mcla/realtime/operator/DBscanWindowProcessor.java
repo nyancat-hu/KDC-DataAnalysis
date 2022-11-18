@@ -21,7 +21,7 @@ import java.util.List;
  * @Date: 2022/11/18 19:02
  * @Version: 1.0
  */
-public class DBscanWindowFunction extends ProcessWindowFunction<DbscanBean, String, String, TimeWindow> {
+public class DBscanWindowProcessor extends ProcessWindowFunction<DbscanBean, String, String, TimeWindow> {
     @Override
     public void process(String type, ProcessWindowFunction<DbscanBean, String, String, TimeWindow>.Context context, Iterable<DbscanBean> iterable, Collector<String> collector) {
         List<DoublePoint> points = new ArrayList<>();

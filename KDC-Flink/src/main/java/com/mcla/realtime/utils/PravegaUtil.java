@@ -5,7 +5,7 @@ import io.pravega.client.stream.Stream;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.connectors.flink.PravegaConfig;
 
-public class PravegaUtils {
+public class PravegaUtil {
 
     public static Stream createStream(PravegaConfig pravegaConfig, String streamName) {
         return createStream(pravegaConfig, streamName, StreamConfiguration.builder().build());
