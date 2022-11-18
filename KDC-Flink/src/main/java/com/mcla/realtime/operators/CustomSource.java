@@ -18,7 +18,6 @@ public class CustomSource {
         //执行
         env.execute();
 
-
     }
 
     public static class DPCCustomSource implements SourceFunction<ClusterReading> {
@@ -30,26 +29,26 @@ public class CustomSource {
             while (running)
             {
                 int a = random.nextInt(3)+1;   //
-                for(int i = 0;i<5;i++){
+                for(int i = 0; i < 5; i++){
                     if(a == 1)
                     {
                         double x = Math.round((10.00 + random.nextDouble() * 20.00)*100)/100.0; // 范围[10,30]
                         double y = Math.round((10.00 + random.nextDouble() * 20.00)*100)/100.0;// 范围[10,30]
-                        sourceContext.collect(new ClusterReading(x,y,a));
+                        sourceContext.collect(new ClusterReading(x, y, "a", 1));
                         Thread.sleep(100L);
                     }
                     if(a == 2)
                     {
                         double x = Math.round((3.00 + random.nextDouble() * 25.00)*100)/100.0;  // 范围[3,28]
                         double y = Math.round((3.00 + random.nextDouble() * 25.00)*100)/100.0;  // 范围[3,28]
-                        sourceContext.collect(new ClusterReading(x,y,a));
+                        sourceContext.collect(new ClusterReading(x, y, "b", 1));
                         Thread.sleep(100L);
                     }
                     if(a == 3)
                     {
                         double x = Math.round((10.00 + random.nextDouble() * 20.00)*100)/100.0;  // 范围[10,30]
                         double y = Math.round((3.00 + random.nextDouble() * 25.00)*100)/100.0;  // 范围[3,28]
-                        sourceContext.collect(new ClusterReading(x,y,a));
+                        sourceContext.collect(new ClusterReading(x, y, "c", 1));
                         Thread.sleep(100L);
                     }
                 }
