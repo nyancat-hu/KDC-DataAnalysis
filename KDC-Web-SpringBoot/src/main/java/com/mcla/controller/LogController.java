@@ -1,5 +1,6 @@
 package com.mcla.controller;
 
+import com.mcla.bean.StateBean;
 import com.mcla.service.impl.LogServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -16,6 +17,11 @@ public class LogController {
     @RequestMapping("/log")
     public String logger(@RequestBody Map<String,String> map){
         logService.printLog(map);
+        return "success";
+    }
+    @RequestMapping("/log/state")
+    public String logState(@RequestBody StateBean sb){
+        logService.printLog(sb);
         return "success";
     }
 }

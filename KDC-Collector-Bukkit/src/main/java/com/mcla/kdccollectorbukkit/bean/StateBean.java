@@ -8,6 +8,8 @@ import me.lucko.spark.api.statistic.StatisticWindow;
 import me.lucko.spark.api.statistic.misc.DoubleAverageInfo;
 import me.lucko.spark.api.statistic.types.DoubleStatistic;
 import me.lucko.spark.api.statistic.types.GenericStatistic;
+import me.lucko.spark.common.monitor.cpu.CpuMonitor;
+import me.lucko.spark.common.monitor.tick.TickStatistics;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 
@@ -23,26 +25,29 @@ import java.util.Map;
  */
 public class StateBean {
     double tpsLast10Secs;
-    double tpsLast5Mins;
-    double msptMean;
-    double mspt95Percentile;
+
+    public double getTpsLast5Secs() {
+        return tpsLast5Secs;
+    }
+
+    public void setTpsLast5Secs(double tpsLast5Secs) {
+        this.tpsLast5Secs = tpsLast5Secs;
+    }
+
+    double tpsLast5Secs;
+
+
     double usagelastMin;
     Map<String, Map<Long,Double>> gc;
 
     public StateBean() {
         gc = new HashMap<>();
         Map<String, GarbageCollector> gcSpark = SparkUtil.getSpark().gc();
-        DoubleStatistic<StatisticWindow.CpuUsage> cpuUsage = SparkUtil.getSpark().cpuSystem();
-        DoubleStatistic<StatisticWindow.TicksPerSecond> tps = SparkUtil.getSpark().tps();
-        GenericStatistic<DoubleAverageInfo, StatisticWindow.MillisPerTick> mspt = SparkUtil.getSpark().mspt();
-        if (tps != null&&mspt!=null) {
-            setTpsLast5Mins(tps.poll(StatisticWindow.TicksPerSecond.MINUTES_5));
-            setTpsLast10Secs(tps.poll(StatisticWindow.TicksPerSecond.SECONDS_10));
-            setMsptMean(mspt.poll(StatisticWindow.MillisPerTick.MINUTES_1).mean());
-            setMspt95Percentile(mspt.poll(StatisticWindow.MillisPerTick.MINUTES_1).percentile95th());
-        }
 
-        setUsagelastMin(cpuUsage.poll(StatisticWindow.CpuUsage.MINUTES_1));
+        setTpsLast5Secs(new TickStatistics().tps5Sec());
+        setTpsLast10Secs(new TickStatistics().tps10Sec());
+
+        setUsagelastMin(CpuMonitor.processLoad1MinAvg());
         for (GarbageCollector collector : gcSpark.values()) {
             Map<Long,Double> innerGC = new HashMap<>();
             innerGC.put(collector.avgFrequency(),collector.avgTime());
@@ -58,29 +63,6 @@ public class StateBean {
         this.tpsLast10Secs = tpsLast10Secs;
     }
 
-    public double getTpsLast5Mins() {
-        return tpsLast5Mins;
-    }
-
-    public void setTpsLast5Mins(double tpsLast5Mins) {
-        this.tpsLast5Mins = tpsLast5Mins;
-    }
-
-    public double getMsptMean() {
-        return msptMean;
-    }
-
-    public void setMsptMean(double msptMean) {
-        this.msptMean = msptMean;
-    }
-
-    public double getMspt95Percentile() {
-        return mspt95Percentile;
-    }
-
-    public void setMspt95Percentile(double mspt95Percentile) {
-        this.mspt95Percentile = mspt95Percentile;
-    }
 
     public double getUsagelastMin() {
         return usagelastMin;
