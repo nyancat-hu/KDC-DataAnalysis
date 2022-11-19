@@ -1,17 +1,22 @@
 package com.mcla.realtime.app.dwd;
 
 import com.alibaba.fastjson.JSON;
+import com.mcla.realtime.bean.DbscanBean;
 import com.mcla.realtime.bean.ItemBean;
+import com.mcla.realtime.operator.DBscanWindowProcessor;
+import com.mcla.realtime.operator.TableCLeanProcessor;
 import com.mcla.realtime.utils.MyKafkaUtil;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.state.*;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
+import org.apache.flink.connector.jdbc.JdbcExecutionOptions;
 import org.apache.flink.connector.jdbc.JdbcSink;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
@@ -19,6 +24,8 @@ import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
+import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
@@ -63,19 +70,20 @@ public class ItemApp {
         KeyedStream<ItemBean, String> itemBeanKeyedDS = itemBeanDS.keyBy(ItemBean::getItemName);
 
         //TODO 4.定义一个测输出流输出实体存活
-        OutputTag<ArrayList<String>> tag = new OutputTag<ArrayList<String>>("alive"){};
+        OutputTag<ArrayList<String>> tag = new OutputTag<ArrayList<String>>("alive") {
+        };
 
-        SingleOutputStreamOperator<Tuple2<String, Long>>  tuple2itemBeanKeyedDS = itemBeanKeyedDS.process(new KeyedProcessFunction<String, ItemBean, Tuple2<String, Long>>() {
+        SingleOutputStreamOperator<Tuple2<String, Long>> tuple2itemBeanKeyedDS = itemBeanKeyedDS.process(new KeyedProcessFunction<String, ItemBean, Tuple2<String, Long>>() {
             //定义状态，保存上次凋落物总量
             private ValueState<Long> lastItemNums;
             //定义状态，保存当前存活物品数量
-            private MapState<String,Tuple3<String, String, String>> aliveItemIndex;
+            private MapState<String, Tuple3<String, String, String>> aliveItemIndex;
 
             @Override
             public void open(Configuration parameters) throws Exception {
                 // 由上下文获取状态初值
                 lastItemNums = getRuntimeContext().getState(new ValueStateDescriptor<Long>("last-item", Long.class));
-                aliveItemIndex = getRuntimeContext().getMapState(new MapStateDescriptor<String,Tuple3<String, String, String>>("alive-item",Types.STRING,Types.TUPLE(Types.STRING, Types.STRING, Types.STRING)));
+                aliveItemIndex = getRuntimeContext().getMapState(new MapStateDescriptor<String, Tuple3<String, String, String>>("alive-item", Types.STRING, Types.TUPLE(Types.STRING, Types.STRING, Types.STRING)));
             }
 
             @Override
@@ -83,23 +91,23 @@ public class ItemApp {
                 // 获取上次数值
                 Long valueLast = lastItemNums.value();
                 if (valueLast == null) valueLast = 0L;// 初始状态时没有值，赋初值为0
-                ArrayList<String> index= new ArrayList<String>(); //用于返回状态之中的数据
+                ArrayList<String> index = new ArrayList<String>(); //用于返回状态之中的数据
                 // 若物品被拾取，则数量-amount，掉落则+amount
                 if (value.getIsSpawn().equals("true")) {
                     lastItemNums.update(valueLast + Long.parseLong(value.getItemAmount()));
-                    aliveItemIndex.put(value.getTag(),Tuple3.of(value.getX(),value.getY(),value.getZ()));
+                    aliveItemIndex.put(value.getTag(), Tuple3.of(value.getX(), value.getY(), value.getZ()));
                     Iterator iterator = aliveItemIndex.iterator();
                     while (iterator.hasNext()) {
                         index.add(iterator.next().toString().split("=")[1]);
                     }
                     context.output(tag, index);
                 } else {
-                    if(valueLast != 0) {
+                    if (valueLast != 0) {
                         lastItemNums.update(valueLast - Long.parseLong(value.getItemAmount()));
                     }
                     aliveItemIndex.remove(value.getTag());
                     Iterator iterator = aliveItemIndex.iterator();
-                    while(iterator.hasNext()){
+                    while (iterator.hasNext()) {
                         index.add(iterator.next().toString().split("=")[1]);
                     }
 
@@ -115,52 +123,91 @@ public class ItemApp {
             }
         });
 
-
-
+        //TODO 4.输出物品的当前坐标，以及物品当前状态是被销毁还是被创建
         DataStream<ArrayList<String>> sideOutput = tuple2itemBeanKeyedDS.getSideOutput(tag);
         sideOutput.flatMap(new FlatMapFunction<ArrayList<String>, String>() {
-            @Override
-            public void flatMap(ArrayList<String> strings, Collector<String> collector) throws Exception {
-                for (String tuple : strings) {
-                    collector.collect(tuple);
-                }
-            }
-        }).addSink(JdbcSink.sink(
-                "insert into ItemAlive(AliveLocation) values (?)",
-                (statement, str) -> {
-                    statement.setString(1, str);
-                },
-                new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-                        .withUrl("jdbc:mysql://113.101.28.133:60005/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
-                        .withDriverName("com.mysql.jdbc.Driver")
-                        .withUsername("root")
-                        .withPassword("430525")
-                        .build()
-                )
-        );
+                    @Override
+                    public void flatMap(ArrayList<String> strings, Collector<String> collector) throws Exception {
+                        for (String tuple : strings) {
+                            collector.collect(tuple);
+                        }
+                    }
+                })
+                .returns(TypeInformation.of(String.class))
+                .countWindowAll(50)
+                .process(new TableCLeanProcessor("ItemAlive"))
+                .addSink(JdbcSink.sink(
+                                "insert into ItemAlive (AliveLocation) values (?)",
+                                (statement, str) -> {
+                                    statement.setString(1, str);
+                                },
+                                JdbcExecutionOptions.builder()
+                                        .withBatchSize(1)
+                                        .withBatchIntervalMs(200)
+                                        .withMaxRetries(5)
+                                        .build(),
+                                new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
+                                        .withUrl("jdbc:mysql://113.101.28.133:60005/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
+                                        .withDriverName("com.mysql.jdbc.Driver")
+                                        .withUsername("root")
+                                        .withPassword("430525")
+                                        .build()
+                        )
+                );
 
         // 输出每类掉落物品当前的数量
         tuple2itemBeanKeyedDS.addSink(JdbcSink.sink(
-                "insert into NumsCount (Name,Nums,Type) values (?, ?, ?)",
-                (statement, str) -> {
-                    statement.setString(1, str.f0);
-                    statement.setInt(2, Integer.parseInt(str.f1.toString()));
-                    statement.setString(3, String.format("%d", str.hashCode()));
-                },
-                new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-                        .withUrl("jdbc:mysql://topview102:3306/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
-                        .withDriverName("com.mysql.jdbc.Driver")
-                        .withUsername("root")
-                        .withPassword("430525")
-                        .build()
+                        "insert into NumsCount (Name,Nums,Type) values (?, ?, ?)",
+                        (statement, str) -> {
+                            statement.setString(1, str.f0);
+                            statement.setInt(2, Integer.parseInt(str.f1.toString()));
+                            statement.setString(3, String.format("%d", str.hashCode()));
+                        },
+                        JdbcExecutionOptions.builder()
+                                .withBatchSize(1)
+                                .withBatchIntervalMs(200)
+                                .withMaxRetries(5)
+                                .build(),
+                        new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
+                                .withUrl("jdbc:mysql://192.168.88.245:3306/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
+                                .withDriverName("com.mysql.jdbc.Driver")
+                                .withUsername("root")
+                                .withPassword("430525")
+                                .build()
                 )
         );
-        tuple2itemBeanKeyedDS.print();
-        sideOutput.print();
+//        tuple2itemBeanKeyedDS.print();
+//        sideOutput.print();
 
-        //TODO 4.输出物品的当前坐标，以及物品当前状态是被销毁还是被创建
-
-
+        //输出聚类中心点
+        sideOutput.flatMap((FlatMapFunction<ArrayList<String>, DbscanBean>) (strings, collector) -> {
+                    for (String tuple : strings) {
+                        String[] replace = tuple.replace("(", "").replace(")", "").split(",");
+                        collector.collect(new DbscanBean(Double.parseDouble(replace[0]), Double.parseDouble(replace[1]), Double.parseDouble(replace[2]), 0));
+                    }
+                }).returns(TypeInformation.of(DbscanBean.class))
+                .keyBy(data -> "DontChange")
+                .window(TumblingProcessingTimeWindows.of(Time.seconds(10L)))
+                .process(new DBscanWindowProcessor())
+                .addSink(JdbcSink.sink(
+                                "UPDATE DensityTable SET CenterPosition = ?,ChunkLocation = ?, WHERE Name = 'item'",
+                                (statement, str) -> {
+                                    statement.setString(1, String.format("%d", str.hashCode()));
+                                    statement.setString(2, str);
+                                },
+                                JdbcExecutionOptions.builder()
+                                        .withBatchSize(1)
+                                        .withBatchIntervalMs(200)
+                                        .withMaxRetries(5)
+                                        .build(),
+                                new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
+                                        .withUrl("jdbc:mysql://192.168.88.245:3306/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
+                                        .withDriverName("com.mysql.jdbc.Driver")
+                                        .withUsername("root")
+                                        .withPassword("430525")
+                                        .build()
+                        )
+                );
 
         env.execute("Item Module");
     }
