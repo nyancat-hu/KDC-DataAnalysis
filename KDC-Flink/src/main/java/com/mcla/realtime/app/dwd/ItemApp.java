@@ -152,7 +152,7 @@ public class ItemApp {
                 "replace into ItemAlive(AliveName,AliveLocation) values (?,?)",
                 (statement, str) -> {
                     statement.setString(1, str.f0);
-                    statement.setString(2,str.f1.replace("),",");"));
+                    statement.setString(2,str.f1.substring(1,str.f1.toCharArray().length-1).replace("),",");"));
                 },
                 JdbcExecutionOptions.builder()
                         .withBatchSize(10)
