@@ -19,8 +19,7 @@ public class StateBean{
 				",PS Scavenge=" + gc.get("PS Scavenge").toString()
 				.replace("{","")
 				.replace("}","")
-				.replace("=","*") +
-				",time='" + time + '\'';
+				.replace("=","*");
 	}
 
 	@JSONField(name="tpsLast5Mins")
