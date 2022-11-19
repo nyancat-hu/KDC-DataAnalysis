@@ -136,7 +136,7 @@ public class entityApp {
                                 .withMaxRetries(5)
                                 .build(),
                         new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-                                .withUrl("jdbc:mysql://192.168.88.245:3306/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
+                                .withUrl("jdbc:mysql://113.101.28.133:60005/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
                                 .withDriverName("com.mysql.jdbc.Driver")
                                 .withUsername("root")
                                 .withPassword("430525")
@@ -165,7 +165,7 @@ public class entityApp {
                                 .withMaxRetries(5)
                                 .build(),
                         new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-                                .withUrl("jdbc:mysql://192.168.88.245:3306/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
+                                .withUrl("jdbc:mysql://topview102:3306/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
                                 .withDriverName("com.mysql.jdbc.Driver")
                                 .withUsername("root")
                                 .withPassword("430525")
@@ -184,7 +184,7 @@ public class entityApp {
                 .window(TumblingProcessingTimeWindows.of(Time.seconds(10L)))
                 .process(new DBscanWindowProcessor())
                 .addSink(JdbcSink.sink(
-                        "UPDATE DensityTable SET CenterPosition = ?,ChunkLocation = ?, WHERE Name = 'entity'",
+                        "UPDATE DensityTable SET CenterPosition = ?,ChunkLocation = ?",
                         (statement, str) -> {
                             statement.setString(1, String.format("%d", str.hashCode()));
                             statement.setString(2, str);
@@ -195,7 +195,7 @@ public class entityApp {
                                 .withMaxRetries(5)
                                 .build(),
                         new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-                                .withUrl("jdbc:mysql://192.168.88.245:3306/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
+                                .withUrl("jdbc:mysql://topview102:3306/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
                                 .withDriverName("com.mysql.jdbc.Driver")
                                 .withUsername("root")
                                 .withPassword("430525")

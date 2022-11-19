@@ -9,6 +9,13 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 
 import java.util.Properties;
 
+/**
+ * @Description:
+ * @ClassName: MyKafkaUtil
+ * @Author: ice_light
+ * @Date: 2022/11/15 15:58
+ * @Version: 1.0
+ */
 public class MyKafkaUtil {
     private static String KAFKA_SERVER = "topview102:9092,topview103:9092,topview104:9092";
     private static String DEFAULT_TOPIC = "DEFAULT_DATA";
