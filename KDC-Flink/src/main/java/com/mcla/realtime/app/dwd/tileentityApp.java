@@ -11,6 +11,8 @@ import org.apache.flink.api.common.state.MapState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
+import org.apache.flink.api.common.typeinfo.TypeHint;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
@@ -30,7 +32,9 @@ import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 public class tileentityApp {
     public static void main(String[] args) throws Exception {
@@ -49,7 +53,7 @@ public class tileentityApp {
         //TODO 3.按物品名分类，统计每类掉落物品当前的数量
         KeyedStream<TileEntityBean, String> tileEntityBeankeyDS = EntityBeanDS.keyBy(TileEntityBean::getType);
         //TODO 4.定义一个测输出流输出生物实体存活
-        OutputTag<ArrayList<String>> tag = new OutputTag<ArrayList<String>>("alive") {
+        OutputTag<Map<String,ArrayList<String>>> tag = new OutputTag<Map<String,ArrayList<String>>>("alive") {
         };
 
         SingleOutputStreamOperator<Tuple2<String, Long>> tuple2tileEntityBeanKeyedDS = tileEntityBeankeyDS.process(new KeyedProcessFunction<String, TileEntityBean, Tuple2<String, Long>>() {
@@ -69,7 +73,8 @@ public class tileentityApp {
             public void processElement(TileEntityBean value, Context context, Collector<Tuple2<String, Long>> collector) throws Exception {
                 // 获取上次数值
                 Long valueLast = lasttileEntityNums.value();
-                ArrayList<String> index = new ArrayList<String>(); //用于返回状态之中的数据
+                HashMap<String, ArrayList<String>> index = new HashMap<>();
+                ArrayList<String> list = new ArrayList<>();
                 if (valueLast == null) valueLast = 0L;// 初始状态时没有值，赋初值为0
                 // 若物品被拾取，则数量-amount，掉落则+amount
                 if (value.getIsPlace().equals("true")) {
@@ -77,7 +82,8 @@ public class tileentityApp {
                     alive.put(value.getTag(), Tuple3.of(value.getX(), value.getY(), value.getZ()));
                     Iterator iterator = alive.iterator();
                     while (iterator.hasNext()) {
-                        index.add(iterator.next().toString().split("=")[1]);
+                        list.add(iterator.next().toString().split("=")[1]);
+                        index.put(value.getTag(),list);
                     }
                     context.output(tag, index);
                 } else {
@@ -87,7 +93,8 @@ public class tileentityApp {
                     alive.remove(value.getTag());
                     Iterator iterator = alive.iterator();
                     while (iterator.hasNext()) {
-                        index.add(iterator.next().toString().split("=")[1]);
+                        list.add(iterator.next().toString().split("=")[1]);
+                        index.put(value.getBlockName(),list);
                     }
                     context.output(tag, index);
                 }
@@ -98,17 +105,17 @@ public class tileentityApp {
             public void close() throws Exception {
                 lasttileEntityNums.clear();
             }
-        });
+        }).returns(Types.TUPLE(Types.STRING, Types.LONG));
 
         // 输出每类掉落物品当前的数量
 
-        tuple2tileEntityBeanKeyedDS.addSink(
+        tuple2tileEntityBeanKeyedDS.returns(Types.TUPLE(Types.STRING, Types.LONG)).addSink(
                 JdbcSink.sink(
-                        "insert into NumsCount (Name,Nums,Type) values (?,?,?)",
-                        (statement, str) -> {
-                            statement.setString(1, str.f0);
-                            statement.setInt(2, Integer.parseInt(str.f1.toString()));
-                            statement.setString(3, String.format("%d", str.hashCode()));
+                        "replace into NumsCount (Name,Nums,Type) values (?,?,?)",
+                        (statement, tuple2) -> {
+                            statement.setString(1, tuple2.f0);
+                            statement.setInt(2, Integer.parseInt(tuple2.f1.toString()));
+                            statement.setString(3, "tileEntity");
                         },
                         JdbcExecutionOptions.builder()
                                 .withBatchSize(1)
@@ -123,39 +130,43 @@ public class tileentityApp {
                                 .build()
                 )
         );
-        tuple2tileEntityBeanKeyedDS.print();
 
 
         //TODO 4.输出物品的当前坐标，以及物品当前状态是被销毁还是被创建
         //输出当前存活生物的下标
-        DataStream<ArrayList<String>> sideOutput = tuple2tileEntityBeanKeyedDS.getSideOutput(tag);
-        sideOutput.flatMap(new FlatMapFunction<ArrayList<String>, String>() {
+
+        DataStream<Map<String,ArrayList<String>>> sideOutput = tuple2tileEntityBeanKeyedDS.getSideOutput(tag);
+        sideOutput.flatMap(
+                new FlatMapFunction<Map<String, ArrayList<String>>, Tuple2<String,String>>() {
                     @Override
-                    public void flatMap(ArrayList<String> strings, Collector<String> collector) throws Exception {
-                        for (String tuple : strings) {
-                            collector.collect(tuple);
+                    public void flatMap(Map<String, ArrayList<String>> tuple, Collector<Tuple2<String,String>> collector) throws Exception {
+                        for (String value : tuple.keySet()) {
+                                collector.collect(Tuple2.of(value,tuple.get(value).toString()));
                         }
                     }
-                })
-                .addSink(JdbcSink.sink(
-                                "insert into TileEntityAlive (AliveHashCode,AliveLocation) values (?,?)",
-                                (statement, str) -> {
-                                    statement.setString(1, String.format("%d", str.hashCode()));
-                                    statement.setString(2, str);
-                                },
-                                JdbcExecutionOptions.builder()
-                                        .withBatchSize(1)
-                                        .withBatchIntervalMs(200)
-                                        .withMaxRetries(5)
-                                        .build(),
-                                new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-                                        .withUrl("jdbc:mysql://192.168.88.245:3306/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
-                                        .withDriverName("com.mysql.jdbc.Driver")
-                                        .withUsername("root")
-                                        .withPassword("430525")
-                                        .build()
-                        )
-                );
+                }
+        )
+                .returns(Types.TUPLE(Types.STRING,Types.STRING)).addSink(JdbcSink.sink(
+                "replace into TileEntityAlive(AliveHashCode,AliveLocation) values (?,?)",
+                (statement, str) -> {
+                    statement.setString(1, String.format("%d",str.f0.hashCode()));
+                    statement.setString(2, str.f1.substring(1,str.f1.toCharArray().length-1));
+                },
+                JdbcExecutionOptions.builder()
+                        .withBatchSize(10)
+                        .withBatchIntervalMs(200)
+                        .withMaxRetries(5)
+                        .build(),
+                new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
+                        .withUrl("jdbc:mysql://topview102:3306/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
+                        .withDriverName("com.mysql.jdbc.Driver")
+                        .withUsername("root")
+                        .withPassword("430525")
+                        .build()
+                )
+        );
+        tuple2tileEntityBeanKeyedDS.print();
+
         sideOutput.print();
         env.execute("tileEnity Module");
 
