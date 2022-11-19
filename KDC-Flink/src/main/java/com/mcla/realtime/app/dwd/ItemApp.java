@@ -8,11 +8,13 @@ import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.state.*;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
+import org.apache.flink.connector.jdbc.JdbcExecutionOptions;
 import org.apache.flink.connector.jdbc.JdbcSink;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
@@ -25,6 +27,7 @@ import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -64,7 +67,7 @@ public class ItemApp {
         KeyedStream<ItemBean, String> itemBeanKeyedDS = itemBeanDS.keyBy(ItemBean::getItemName);
 
         //TODO 4.定义一个测输出流输出实体存活
-        OutputTag<ArrayList<String>> tag = new OutputTag<ArrayList<String>>("alive"){};
+        OutputTag<Map<String,ArrayList<String>>> tag = new OutputTag<Map<String,ArrayList<String>>>("alive"){};
 
         SingleOutputStreamOperator<Tuple2<String, Long>>  tuple2itemBeanKeyedDS = itemBeanKeyedDS.process(new KeyedProcessFunction<String, ItemBean, Tuple2<String, Long>>() {
             //定义状态，保存上次凋落物总量
@@ -84,29 +87,35 @@ public class ItemApp {
                 // 获取上次数值
                 Long valueLast = lastItemNums.value();
                 if (valueLast == null) valueLast = 0L;// 初始状态时没有值，赋初值为0
-                ArrayList<String> index= new ArrayList<String>(); //用于返回状态之中的数据
+                HashMap<String, ArrayList<String>> index = new HashMap<>();
+                ArrayList<String> list= new ArrayList<String>(); //用于返回状态之中的数据
                 // 若物品被拾取，则数量-amount，掉落则+amount
                 if (value.getIsSpawn().equals("true")) {
                     lastItemNums.update(valueLast + Long.parseLong(value.getItemAmount()));
                     aliveItemIndex.put(value.getTag(),Tuple3.of(value.getX(),value.getY(),value.getZ()));
                     Iterator iterator = aliveItemIndex.iterator();
                     while (iterator.hasNext()) {
-                        index.add(iterator.next().toString().split("=")[1]);
+                        list.add(iterator.next().toString().split("=")[1]);
+                        index.put(value.getItemName().split("\\.")[2],list);
                     }
                     context.output(tag, index);
                 } else {
                     if(valueLast != 0) {
                         lastItemNums.update(valueLast - Long.parseLong(value.getItemAmount()));
                     }
+                    if(lastItemNums.value() == null){
+                        lastItemNums.update(0L);
+                    }
                     aliveItemIndex.remove(value.getTag());
                     Iterator iterator = aliveItemIndex.iterator();
                     while(iterator.hasNext()){
-                        index.add(iterator.next().toString().split("=")[1]);
+                        list.add(iterator.next().toString().split("=")[1]);
+                        index.put(value.getItemName().split("\\.")[2],list);
                     }
 
                     context.output(tag, index);
                 }
-                collector.collect(new Tuple2<>(value.getItemName(), lastItemNums.value()));
+                collector.collect(new Tuple2<>(value.getItemName().split("\\.")[2], lastItemNums.value()));
             }
 
             @Override
@@ -118,19 +127,28 @@ public class ItemApp {
 
 
 
-        DataStream<ArrayList<String>> sideOutput = tuple2itemBeanKeyedDS.getSideOutput(tag);
-        sideOutput.flatMap(new FlatMapFunction<ArrayList<String>, String>() {
+        DataStream<Map<String,ArrayList<String>>> sideOutput = tuple2itemBeanKeyedDS.getSideOutput(tag);
+        sideOutput.flatMap(new FlatMapFunction<Map<String, ArrayList<String>>, Tuple2<String,String>>() {
             @Override
-            public void flatMap(ArrayList<String> strings, Collector<String> collector) throws Exception {
-                for (String tuple : strings) {
-                    collector.collect(tuple);
+            public void flatMap(Map<String, ArrayList<String>> tuple, Collector<Tuple2<String, String>> collector) throws Exception {
+                for (String value : tuple.keySet()) {
+                    for (String index : tuple.get(value)) {
+                        collector.collect(Tuple2.of(value,index));
+                    }
                 }
             }
-        }).addSink(JdbcSink.sink(
-                "insert into ItemAlive(AliveLocation) values (?)",
+        })
+                .returns(Types.TUPLE(Types.STRING,Types.STRING)).addSink(JdbcSink.sink(
+                "replace into ItemAlive(AliveName,AliveLocation) values (?,?)",
                 (statement, str) -> {
-                    statement.setString(1, str);
+                    statement.setString(1, str.f0);
+                    statement.setString(2,str.f1);
                 },
+                JdbcExecutionOptions.builder()
+                        .withBatchSize(10)
+                        .withBatchIntervalMs(200)
+                        .withMaxRetries(5)
+                        .build(),
                 new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
                         .withUrl("jdbc:mysql://113.101.28.133:60005/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
                         .withDriverName("com.mysql.jdbc.Driver")
@@ -141,13 +159,18 @@ public class ItemApp {
         );
 
         // 输出每类掉落物品当前的数量
-        tuple2itemBeanKeyedDS.addSink(JdbcSink.sink(
-                "insert into NumsCount (Name,Nums,Type) values (?, ?, ?)",
+        tuple2itemBeanKeyedDS.returns(Types.TUPLE(Types.STRING, Types.LONG)).addSink(JdbcSink.sink(
+                "replace into NumsCount (Name,Nums,Type) values (?, ?, ?)",
                 (statement, str) -> {
                     statement.setString(1, str.f0);
                     statement.setInt(2, Integer.parseInt(str.f1.toString()));
-                    statement.setString(3, String.format("%d", str.hashCode()));
+                    statement.setString(3, "Item");
                 },
+                JdbcExecutionOptions.builder()
+                        .withBatchSize(10)
+                        .withBatchIntervalMs(200)
+                        .withMaxRetries(5)
+                        .build(),
                 new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
                         .withUrl("jdbc:mysql://topview102:3306/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
                         .withDriverName("com.mysql.jdbc.Driver")
