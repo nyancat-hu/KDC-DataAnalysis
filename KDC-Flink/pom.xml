@@ -114,6 +114,7 @@
         </dependency>
 
     </dependencies>
+
     <build>
         <plugins>
             <!-- 编译插件 -->
@@ -136,12 +137,6 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
-                    <archive>
-                        <manifest>
-                            <!-- 可以设置jar包的入口类(可选) -->
-                            <mainClass>com.wang.flink.alink.AlinkDemo</mainClass>
-                        </manifest>
-                    </archive>
                 </configuration>
                 <executions>
                     <execution>
