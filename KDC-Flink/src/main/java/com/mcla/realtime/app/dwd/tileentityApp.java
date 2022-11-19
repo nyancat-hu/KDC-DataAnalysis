@@ -117,8 +117,13 @@ public class tileentityApp {
                             statement.setInt(2, Integer.parseInt(tuple2.f1.toString()));
                             statement.setString(3, "tileEntity");
                         },
+                        JdbcExecutionOptions.builder()
+                                .withBatchSize(1)
+                                .withBatchIntervalMs(200)
+                                .withMaxRetries(5)
+                                .build(),
                         new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-                                .withUrl("jdbc:mysql://topview102:3306/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
+                                .withUrl("jdbc:mysql://192.168.88.245:3306/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
                                 .withDriverName("com.mysql.jdbc.Driver")
                                 .withUsername("root")
                                 .withPassword("430525")
@@ -129,6 +134,7 @@ public class tileentityApp {
 
         //TODO 4.输出物品的当前坐标，以及物品当前状态是被销毁还是被创建
         //输出当前存活生物的下标
+
         DataStream<Map<String,ArrayList<String>>> sideOutput = tuple2tileEntityBeanKeyedDS.getSideOutput(tag);
         sideOutput.flatMap(
                 new FlatMapFunction<Map<String, ArrayList<String>>, Tuple2<String,String>>() {
@@ -160,6 +166,7 @@ public class tileentityApp {
                 )
         );
         tuple2tileEntityBeanKeyedDS.print();
+
         sideOutput.print();
         env.execute("tileEnity Module");
 

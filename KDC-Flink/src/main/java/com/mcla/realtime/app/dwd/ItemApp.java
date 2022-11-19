@@ -2,8 +2,8 @@ package com.mcla.realtime.app.dwd;
 
 import com.alibaba.fastjson.JSON;
 import com.mcla.realtime.bean.ItemBean;
+import com.mcla.realtime.operator.TableCLeanProcessor;
 import com.mcla.realtime.utils.MyKafkaUtil;
-import jdk.internal.org.objectweb.asm.tree.analysis.Value;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
@@ -67,19 +67,23 @@ public class ItemApp {
         KeyedStream<ItemBean, String> itemBeanKeyedDS = itemBeanDS.keyBy(ItemBean::getItemName);
 
         //TODO 4.定义一个测输出流输出实体存活
+
         OutputTag<Map<String,ArrayList<String>>> tag = new OutputTag<Map<String,ArrayList<String>>>("alive"){};
 
-        SingleOutputStreamOperator<Tuple2<String, Long>>  tuple2itemBeanKeyedDS = itemBeanKeyedDS.process(new KeyedProcessFunction<String, ItemBean, Tuple2<String, Long>>() {
+ 
+
+
+        SingleOutputStreamOperator<Tuple2<String, Long>> tuple2itemBeanKeyedDS = itemBeanKeyedDS.process(new KeyedProcessFunction<String, ItemBean, Tuple2<String, Long>>() {
             //定义状态，保存上次凋落物总量
             private ValueState<Long> lastItemNums;
             //定义状态，保存当前存活物品数量
-            private MapState<String,Tuple3<String, String, String>> aliveItemIndex;
+            private MapState<String, Tuple3<String, String, String>> aliveItemIndex;
 
             @Override
             public void open(Configuration parameters) throws Exception {
                 // 由上下文获取状态初值
                 lastItemNums = getRuntimeContext().getState(new ValueStateDescriptor<Long>("last-item", Long.class));
-                aliveItemIndex = getRuntimeContext().getMapState(new MapStateDescriptor<String,Tuple3<String, String, String>>("alive-item",Types.STRING,Types.TUPLE(Types.STRING, Types.STRING, Types.STRING)));
+                aliveItemIndex = getRuntimeContext().getMapState(new MapStateDescriptor<String, Tuple3<String, String, String>>("alive-item", Types.STRING, Types.TUPLE(Types.STRING, Types.STRING, Types.STRING)));
             }
 
             @Override
@@ -87,12 +91,16 @@ public class ItemApp {
                 // 获取上次数值
                 Long valueLast = lastItemNums.value();
                 if (valueLast == null) valueLast = 0L;// 初始状态时没有值，赋初值为0
+
                 HashMap<String, ArrayList<String>> index = new HashMap<>();
                 ArrayList<String> list= new ArrayList<String>(); //用于返回状态之中的数据
+
+
+
                 // 若物品被拾取，则数量-amount，掉落则+amount
                 if (value.getIsSpawn().equals("true")) {
                     lastItemNums.update(valueLast + Long.parseLong(value.getItemAmount()));
-                    aliveItemIndex.put(value.getTag(),Tuple3.of(value.getX(),value.getY(),value.getZ()));
+                    aliveItemIndex.put(value.getTag(), Tuple3.of(value.getX(), value.getY(), value.getZ()));
                     Iterator iterator = aliveItemIndex.iterator();
                     while (iterator.hasNext()) {
                         list.add(iterator.next().toString().split("=")[1]);
@@ -100,7 +108,7 @@ public class ItemApp {
                     }
                     context.output(tag, index);
                 } else {
-                    if(valueLast != 0) {
+                    if (valueLast != 0) {
                         lastItemNums.update(valueLast - Long.parseLong(value.getItemAmount()));
 
                     }
@@ -109,9 +117,13 @@ public class ItemApp {
                     }
                     aliveItemIndex.remove(value.getTag());
                     Iterator iterator = aliveItemIndex.iterator();
+
                     while(iterator.hasNext()){
                         list.add(iterator.next().toString().split("=")[1]);
                         index.put(value.getItemName().split("\\.")[2],list);
+
+
+
                     }
 
                     context.output(tag, index);
@@ -125,6 +137,7 @@ public class ItemApp {
                 aliveItemIndex.clear();
             }
         });
+
 
 
 
@@ -178,13 +191,15 @@ public class ItemApp {
                         .withUsername("root")
                         .withPassword("430525")
                         .build()
+
+
+
                 )
         );
         tuple2itemBeanKeyedDS.print();
         sideOutput.print();
 
         //TODO 4.输出物品的当前坐标，以及物品当前状态是被销毁还是被创建
-
 
 
         env.execute("Item Module");
