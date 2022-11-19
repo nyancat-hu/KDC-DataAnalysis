@@ -151,7 +151,7 @@ public class tileentityApp {
                 "replace into TileEntityAlive(AliveHashCode,AliveLocation) values (?,?)",
                 (statement, str) -> {
                     statement.setString(1, String.format("%d",str.f0.hashCode()));
-                    statement.setString(2, str.f1.substring(1,str.f1.toCharArray().length-1));
+                    statement.setString(2, str.f1.substring(1,str.f1.toCharArray().length-1).replace("),",");"));
                 },
                 JdbcExecutionOptions.builder()
                         .withBatchSize(10)

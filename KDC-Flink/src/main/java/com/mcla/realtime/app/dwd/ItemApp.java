@@ -144,9 +144,7 @@ public class ItemApp {
             @Override
             public void flatMap(Map<String, ArrayList<String>> tuple, Collector<Tuple2<String, String>> collector) throws Exception {
                 for (String value : tuple.keySet()) {
-                    for (String index : tuple.get(value)) {
-                        collector.collect(Tuple2.of(value,index));
-                    }
+                        collector.collect(Tuple2.of(value,tuple.get(value).toString()));
                 }
             }
         })
@@ -154,7 +152,7 @@ public class ItemApp {
                 "replace into ItemAlive(AliveName,AliveLocation) values (?,?)",
                 (statement, str) -> {
                     statement.setString(1, str.f0);
-                    statement.setString(2,str.f1);
+                    statement.setString(2,str.f1.replace("),",");"));
                 },
                 JdbcExecutionOptions.builder()
                         .withBatchSize(10)
@@ -238,6 +236,7 @@ public class ItemApp {
         //TODO 4.输出物品的当前坐标，以及物品当前状态是被销毁还是被创建
 
 
+        sideOutput.print();
         env.execute("Item Module");
     }
 }
