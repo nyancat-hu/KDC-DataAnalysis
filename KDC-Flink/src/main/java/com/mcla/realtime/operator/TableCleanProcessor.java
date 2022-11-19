@@ -14,10 +14,10 @@ import java.util.Iterator;
  * @Date: 2022/11/19 1:47
  * @Version: 1.0
  */
-public class TableCLeanProcessor extends ProcessAllWindowFunction<String, String, GlobalWindow> {
+public class TableCleanProcessor extends ProcessAllWindowFunction<String, String, GlobalWindow> {
     private final String tableName;
 
-    public TableCLeanProcessor(String tableName) {
+    public TableCleanProcessor(String tableName) {
         this.tableName = tableName;
     }
 

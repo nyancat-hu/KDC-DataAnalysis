@@ -1,12 +1,11 @@
 package com.mcla.realtime.app.dwd;
 
 import com.alibaba.fastjson.JSON;
+import com.mcla.realtime.bean.DbscanBean;
 import com.mcla.realtime.bean.ItemBean;
-import com.mcla.realtime.operator.TableCLeanProcessor;
+import com.mcla.realtime.operator.DBscanWindowProcessor;
 import com.mcla.realtime.utils.MyKafkaUtil;
 import org.apache.flink.api.common.functions.FlatMapFunction;
-import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.state.*;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
@@ -22,14 +21,13 @@ import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
+import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @Description: 统计物品相关值的Flink程序
@@ -56,7 +54,7 @@ public class ItemApp {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
         // 调用Kafka工具类，获取FlinkKafkaConsumer
-        FlinkKafkaConsumer<String> kafkaSource = MyKafkaUtil.getKafkaSource(topic, groupId);
+        FlinkKafkaConsumer<String> kafkaSource = MyKafkaUtil.getKafkaSource(topic, groupId,true);
         // 创建一个Kafka输入流
         DataStreamSource<String> jsonStrDS = env.addSource(kafkaSource);
 
@@ -196,8 +194,46 @@ public class ItemApp {
 
                 )
         );
-        tuple2itemBeanKeyedDS.print();
-        sideOutput.print();
+        //输出聚类中心点
+        sideOutput.flatMap((FlatMapFunction<Map<String,ArrayList<String>>, DbscanBean>) (strings, collector) -> {
+            Collection<ArrayList<String>> values = strings.values();
+            for (ArrayList<String> value : values) {
+                for (String tuple : value) {
+                    String[] replace = tuple.replace("(", "").replace(")", "").split(",");
+                    collector.collect(new DbscanBean(Double.parseDouble(replace[0]),Double.parseDouble(replace[1]),Double.parseDouble(replace[2]),0));
+                }
+            }
+        }).returns(TypeInformation.of(DbscanBean.class))
+                .keyBy(data -> "DontChange")
+                .window(TumblingProcessingTimeWindows.of(Time.seconds(10L)))
+                .process(new DBscanWindowProcessor())
+                .filter(str->!str.equals(""))
+                .addSink(JdbcSink.sink(
+                        "UPDATE DensityTable SET CenterPosition = ?,ChunkLocation = ? WHERE `Name` = 'item' ",
+                        (statement, str) -> {
+                            statement.setString(1, str);
+                            String[] split = str.split(";");
+                            StringBuilder sb = new StringBuilder();
+                            for (String s : split) {
+                                String[] split1 = s.split(",");
+                                sb.append((int)Math.floor(Double.parseDouble(split1[0]) / 16)).append(",").append((int)Math.floor(Double.parseDouble(split1[1]) / 16)).append(",Y;");
+                            }
+                            String substring = sb.substring(0, sb.length() - 1);
+                            statement.setString(2, substring);
+                        },
+                        JdbcExecutionOptions.builder()
+                                .withBatchSize(1)
+                                .withBatchIntervalMs(200)
+                                .withMaxRetries(5)
+                                .build(),
+                        new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
+                                .withUrl("jdbc:mysql://192.168.88.245:3306/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
+                                .withDriverName("com.mysql.jdbc.Driver")
+                                .withUsername("root")
+                                .withPassword("430525")
+                                .build()
+                        )
+                );
 
         //TODO 4.输出物品的当前坐标，以及物品当前状态是被销毁还是被创建
 

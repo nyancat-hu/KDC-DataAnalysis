@@ -26,17 +26,19 @@ public class DBscanWindowProcessor extends ProcessWindowFunction<DbscanBean, Str
     public void process(String type, ProcessWindowFunction<DbscanBean, String, String, TimeWindow>.Context context, Iterable<DbscanBean> iterable, Collector<String> collector) {
         List<DoublePoint> points = new ArrayList<>();
         for (DbscanBean mcResource : iterable) {
-            points.add(new DoublePoint(new double[]{mcResource.getX(), mcResource.getY()}));
+            points.add(new DoublePoint(new double[]{mcResource.getX(), mcResource.getZ()}));
         }
-        ArrayList<DoublePoint> result = new ArrayList<>();
+        StringBuilder result = new StringBuilder();
         DBSCANClusterer dbscan = new DBSCANClusterer(1.2, 5);
         List<Cluster<DoublePoint>> cluster = dbscan.cluster(points);
         for (int i = 0; i < cluster.size(); i++) {
-            result.add(cluster.get(i).getPoints().get(0));
+            result.append(cluster.get(i).getPoints().get(0)).append(";");
             if(i>=3) break;
         }
+        String replace = result.toString().replace("[", "").replace("]", "");
+        String substring = "";
+        if(replace.length()>1) substring = replace.substring(0, replace.length() - 1);
 
-//        DBScanOperator.trainAndPredict(mc);
-        collector.collect(String.valueOf(result));
+        collector.collect(substring);
     }
 }

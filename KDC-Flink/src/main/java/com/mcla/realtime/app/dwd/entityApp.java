@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSON;
 import com.mcla.realtime.bean.DbscanBean;
 import com.mcla.realtime.bean.EntityBean;
 import com.mcla.realtime.operator.DBscanWindowProcessor;
-import com.mcla.realtime.operator.TableCLeanProcessor;
 import com.mcla.realtime.utils.MyKafkaUtil;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.state.MapState;
@@ -31,10 +30,7 @@ import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 public class entityApp {
     /*
@@ -53,7 +49,7 @@ public class entityApp {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
         // 调用Kafka工具类，获取FlinkKafkaConsumer
-        FlinkKafkaConsumer<String> kafkaSource = MyKafkaUtil.getKafkaSource(Topic, groupId);
+        FlinkKafkaConsumer<String> kafkaSource = MyKafkaUtil.getKafkaSource(Topic, groupId,true);
         // 创建一个Kafka输入流
         DataStreamSource<String> jsonStrDS = env.addSource(kafkaSource);
         //TODO 2.将Item数据转为JavaBean
@@ -167,9 +163,6 @@ public class entityApp {
                         },
                         JdbcExecutionOptions.builder()
                                 .withBatchSize(10)
-
-
-
                                 .withBatchIntervalMs(200)
                                 .withMaxRetries(5)
                                 .build(),
@@ -181,28 +174,36 @@ public class entityApp {
                                 .build()
                         )
                 );
-
-        sideOutput.print();
-        tuple2EntityBeanKeyedDS.print();
-
         //输出当前存活的生物
+//        sideOutput.print();
 
 
         //输出聚类中心点
-        sideOutput.flatMap((FlatMapFunction<ArrayList<String>, DbscanBean>) (strings, collector) -> {
-            for (String tuple : strings) {
-                String[] replace = tuple.replace("(", "").replace(")", "").split(",");
-                collector.collect(new DbscanBean(Double.parseDouble(replace[0]),Double.parseDouble(replace[1]),Double.parseDouble(replace[2]),0));
+        sideOutput.flatMap((FlatMapFunction<Map<String,ArrayList<String>>, DbscanBean>) (strings, collector) -> {
+            Collection<ArrayList<String>> values = strings.values();
+            for (ArrayList<String> value : values) {
+                for (String tuple : value) {
+                    String[] replace = tuple.replace("(", "").replace(")", "").split(",");
+                    collector.collect(new DbscanBean(Double.parseDouble(replace[0]),Double.parseDouble(replace[1]),Double.parseDouble(replace[2]),0));
+                }
             }
         }).returns(TypeInformation.of(DbscanBean.class))
                 .keyBy(data -> "DontChange")
                 .window(TumblingProcessingTimeWindows.of(Time.seconds(10L)))
                 .process(new DBscanWindowProcessor())
+                .filter(str->!str.equals(""))
                 .addSink(JdbcSink.sink(
-                        "UPDATE DensityTable SET CenterPosition = ?,ChunkLocation = ?",
+                        "UPDATE DensityTable SET CenterPosition = ?,ChunkLocation = ? WHERE `Name` = 'entity' ",
                         (statement, str) -> {
-                            statement.setString(1, String.format("%d", str.hashCode()));
-                            statement.setString(2, str);
+                            statement.setString(1, str);
+                            String[] split = str.split(";");
+                            StringBuilder sb = new StringBuilder();
+                            for (String s : split) {
+                                String[] split1 = s.split(",");
+                                sb.append((int)Math.floor(Double.parseDouble(split1[0]) / 16)).append(",").append((int)Math.floor(Double.parseDouble(split1[1]) / 16)).append(",Y;");
+                            }
+                            String substring = sb.substring(0, sb.length() - 1);
+                            statement.setString(2, substring);
                         },
                         JdbcExecutionOptions.builder()
                                 .withBatchSize(1)
