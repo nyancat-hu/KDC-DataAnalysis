@@ -29,6 +29,15 @@ public class MyKafkaUtil {
         props.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA_SERVER);
         return new FlinkKafkaConsumer<String>(topic, new SimpleStringSchema(), props);
     }
+    public static FlinkKafkaConsumer<String> getKafkaSource(String topic, String groupId,boolean fromLast) {
+        //Kafka连接的一些属性配置
+        Properties props = new Properties();
+        props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        props.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA_SERVER);
+        FlinkKafkaConsumer<String> stringFlinkKafkaConsumer = new FlinkKafkaConsumer<>(topic, new SimpleStringSchema(), props);
+        stringFlinkKafkaConsumer.setStartFromLatest();
+        return stringFlinkKafkaConsumer;
+    }
 
     //封装FlinkKafkaProducer
     public static FlinkKafkaProducer<String> getKafkaSink(String topic) {

@@ -9,13 +9,18 @@ public class StateBean{
 
 	@Override
 	public String toString() {
-		return "StateBean{" +
-				"tpsLast5Mins=" + tpsLast5Mins +
-				", usagelastMin=" + usagelastMin +
-				", tpsLast10Secs=" + tpsLast10Secs +
-				", gc=" + gc +
-				", time='" + time + '\'' +
-				'}';
+		return "tpsLast5Mins=" + tpsLast5Mins +
+				",usagelastMin=" + usagelastMin +
+				",tpsLast10Secs=" + tpsLast10Secs +
+				",PS MarkSweep=" + gc.get("PS MarkSweep").toString()
+				.replace("{","")
+				.replace("}","")
+				.replace("=","*")+
+				",PS Scavenge=" + gc.get("PS Scavenge").toString()
+				.replace("{","")
+				.replace("}","")
+				.replace("=","*") +
+				",time='" + time + '\'';
 	}
 
 	@JSONField(name="tpsLast5Mins")
