@@ -21,6 +21,7 @@ public class TileEntityCleanTask extends BukkitRunnable {
         String[] splitPosition = entityDb.getCenterPosition().split(";");
         String[] splitChunk = entityDb.getChunkPosition().split(";");
         this.chunkList.addAll(Arrays.asList(splitChunk));
+
         //在此处加一下广播，广播给区块中的每个玩家
         for (String s : splitChunk) {
             String[] split = s.split(",");
@@ -29,7 +30,7 @@ public class TileEntityCleanTask extends BukkitRunnable {
             .forEach(entity -> {
                 entity.sendMessage("§b检测到您附近状态方块密集，将在 15 秒后进行进行§a§l 状态方块清理 §b...");
                 for (String position : splitPosition) {
-                    entity.sendMessage("        - §c§l密集中心坐标点§b x-y: §a§l[§e§l " + position + "§a§l"  + " ]");
+                    entity.sendMessage("        - §c§l密集中心坐标点§b x-z: §a§l[§e§l " + position + "§a§l"  + " ]");
                 }
             });
         }
@@ -74,7 +75,19 @@ public class TileEntityCleanTask extends BukkitRunnable {
                             value1.get(i).remove();
                         }
                     });
-                    Bukkit.getServer().broadcastMessage("§b已清理区块高密度实体，清理数量为：" + entities.size());
+                    Arrays.stream(Bukkit.getWorld("world").getLoadedChunks())
+                            .filter(chunk -> {
+                                for (String s : chunkList) {
+                                    String[] split = s.split(",");
+                                    if((chunk.getX() == Integer.parseInt(split[0]) && chunk.getZ() == Integer.parseInt(split[1]))&&split[2].equals("Y")) return true;
+                                }
+                                return false;
+                            })
+                            .map(chunk -> chunk.getEntities())
+                            .forEach(entitiesA -> {
+                                Arrays.stream(entitiesA).forEach(entity-> {if((entity instanceof Player)) entity.sendMessage("§b已清理区块高密度实体，清理数量为：" + entities.size());});
+                            });
+//                    Bukkit.getServer().broadcastMessage("§b已清理区块高密度实体，清理数量为：" + entities.size());
                 });
         isCleaning = false;
     }
