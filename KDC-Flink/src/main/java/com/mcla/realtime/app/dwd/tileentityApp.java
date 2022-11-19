@@ -16,6 +16,7 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
+import org.apache.flink.connector.jdbc.JdbcExecutionOptions;
 import org.apache.flink.connector.jdbc.JdbcSink;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
@@ -109,8 +110,13 @@ public class tileentityApp {
                             statement.setInt(2, Integer.parseInt(str.f1.toString()));
                             statement.setString(3, String.format("%d", str.hashCode()));
                         },
+                        JdbcExecutionOptions.builder()
+                                .withBatchSize(1)
+                                .withBatchIntervalMs(200)
+                                .withMaxRetries(5)
+                                .build(),
                         new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-                                .withUrl("jdbc:mysql://topview102:3306/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
+                                .withUrl("jdbc:mysql://192.168.88.245:3306/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
                                 .withDriverName("com.mysql.jdbc.Driver")
                                 .withUsername("root")
                                 .withPassword("430525")
@@ -124,26 +130,32 @@ public class tileentityApp {
         //输出当前存活生物的下标
         DataStream<ArrayList<String>> sideOutput = tuple2tileEntityBeanKeyedDS.getSideOutput(tag);
         sideOutput.flatMap(new FlatMapFunction<ArrayList<String>, String>() {
-            @Override
-            public void flatMap(ArrayList<String> strings, Collector<String> collector) throws Exception {
-                for (String tuple : strings) {
-                    collector.collect(tuple);
-                }
-            }
-        }).addSink(JdbcSink.sink(
-                "insert into TileEntityAlive (AliveHashCode,AliveLocation) values (?,?)",
-                (statement, str) -> {
-                    statement.setString(1, String.format("%d", str.hashCode()));
-                    statement.setString(2, str);
-                },
-                new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-                        .withUrl("jdbc:mysql://topview102:3306/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
-                        .withDriverName("com.mysql.jdbc.Driver")
-                        .withUsername("root")
-                        .withPassword("430525")
-                        .build()
-                )
-        );
+                    @Override
+                    public void flatMap(ArrayList<String> strings, Collector<String> collector) throws Exception {
+                        for (String tuple : strings) {
+                            collector.collect(tuple);
+                        }
+                    }
+                })
+                .addSink(JdbcSink.sink(
+                                "insert into TileEntityAlive (AliveHashCode,AliveLocation) values (?,?)",
+                                (statement, str) -> {
+                                    statement.setString(1, String.format("%d", str.hashCode()));
+                                    statement.setString(2, str);
+                                },
+                                JdbcExecutionOptions.builder()
+                                        .withBatchSize(1)
+                                        .withBatchIntervalMs(200)
+                                        .withMaxRetries(5)
+                                        .build(),
+                                new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
+                                        .withUrl("jdbc:mysql://192.168.88.245:3306/mc_streaming?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false")
+                                        .withDriverName("com.mysql.jdbc.Driver")
+                                        .withUsername("root")
+                                        .withPassword("430525")
+                                        .build()
+                        )
+                );
         sideOutput.print();
         env.execute("tileEnity Module");
 
