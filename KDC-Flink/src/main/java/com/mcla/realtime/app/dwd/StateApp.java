@@ -45,7 +45,7 @@ public class StateApp {
         });
 
         timeDS.addSink(JdbcSink.sink(
-                "insert into StateTable (Time,StateJson) values (?, ?)",
+                "replace into StateTable (Time,StateJson) values (?, ?)",
                 (statement, state) -> {
                     statement.setString(1, state.getTime());
                     statement.setString(2, state.toString());
