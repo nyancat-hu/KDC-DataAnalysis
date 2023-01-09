@@ -103,10 +103,10 @@ public class BaseLogApp {
         FlinkPravegaWriter<String> stateSink = MyPravegaUtil.getPravegaWriter(args, SCOPE_STATE, STREAM_STATE);
         outputDS.addSink(stateSink);
 
-//        itemDS.print("page>>>>");
-//        tileEntityDS.print("start>>>>");
-//        entityDS.print("display>>>>");
-//        outputDS.print();
+        itemDS.print("itemStream>>>>");
+        tileEntityDS.print("tileEntityStream>>>>");
+        entityDS.print("entityStream>>>>");
+        outputDS.print("stateStream>>>>");
 
         env.execute("Shunting Module");
 
