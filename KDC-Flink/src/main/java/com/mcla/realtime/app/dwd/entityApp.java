@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSON;
 import com.mcla.realtime.bean.DbscanBean;
 import com.mcla.realtime.bean.EntityBean;
 import com.mcla.realtime.operator.DBscanWindowProcessor;
-import com.mcla.realtime.utils.MyKafkaUtil;
 import com.mcla.realtime.utils.MyPravegaUtil;
 import io.pravega.connectors.flink.FlinkPravegaReader;
 import org.apache.flink.api.common.functions.FlatMapFunction;
@@ -28,7 +27,6 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
-import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 

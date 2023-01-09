@@ -2,17 +2,14 @@ package com.mcla.realtime.app.dwd;
 
 import com.alibaba.fastjson.JSON;
 import com.mcla.realtime.bean.state.StateBean;
-import com.mcla.realtime.utils.MyKafkaUtil;
 import com.mcla.realtime.utils.MyPravegaUtil;
 import io.pravega.connectors.flink.FlinkPravegaReader;
-import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.apache.flink.connector.jdbc.JdbcExecutionOptions;
 import org.apache.flink.connector.jdbc.JdbcSink;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
