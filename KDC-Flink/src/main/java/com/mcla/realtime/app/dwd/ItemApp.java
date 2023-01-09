@@ -5,6 +5,8 @@ import com.mcla.realtime.bean.DbscanBean;
 import com.mcla.realtime.bean.ItemBean;
 import com.mcla.realtime.operator.DBscanWindowProcessor;
 import com.mcla.realtime.utils.MyKafkaUtil;
+import com.mcla.realtime.utils.MyPravegaUtil;
+import io.pravega.connectors.flink.FlinkPravegaReader;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.state.*;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -46,17 +48,17 @@ public class ItemApp {
      * @date 2022/11/15 20:07
      */
     public static void main(String[] args) throws Exception {
-        //TODO 1.从Kafka中读取数据
-        String topic = "dwd_item_log";
-        String groupId = "base_item_app_group";
-
-
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
-        // 调用Kafka工具类，获取FlinkKafkaConsumer
-        FlinkKafkaConsumer<String> kafkaSource = MyKafkaUtil.getKafkaSource(topic, groupId,true);
-        // 创建一个Kafka输入流
-        DataStreamSource<String> jsonStrDS = env.addSource(kafkaSource);
+
+        //TODO 1.从Pravega中读取数据
+        String scope = "dwd_item_log";
+        String stream = "base_item_app_stream";
+
+        // 调用Pravega工具类，获取FlinkPravegaReader
+        FlinkPravegaReader<String> pravegaSource = MyPravegaUtil.getPravegaReader(args, scope, stream);
+        // 创建一个Pravega输入流
+        DataStreamSource<String> jsonStrDS = env.addSource(pravegaSource);
 
         //TODO 2.将Item数据转为JavaBean
         SingleOutputStreamOperator<ItemBean> itemBeanDS = jsonStrDS.map((jsonStr) -> JSON.parseObject(jsonStr, ItemBean.class));
@@ -65,11 +67,7 @@ public class ItemApp {
         KeyedStream<ItemBean, String> itemBeanKeyedDS = itemBeanDS.keyBy(ItemBean::getItemName);
 
         //TODO 4.定义一个测输出流输出实体存活
-
         OutputTag<Map<String,ArrayList<String>>> tag = new OutputTag<Map<String,ArrayList<String>>>("alive"){};
-
- 
-
 
         SingleOutputStreamOperator<Tuple2<String, Long>> tuple2itemBeanKeyedDS = itemBeanKeyedDS.process(new KeyedProcessFunction<String, ItemBean, Tuple2<String, Long>>() {
             //定义状态，保存上次凋落物总量
@@ -92,8 +90,6 @@ public class ItemApp {
 
                 HashMap<String, ArrayList<String>> index = new HashMap<>();
                 ArrayList<String> list= new ArrayList<String>(); //用于返回状态之中的数据
-
-
 
                 // 若物品被拾取，则数量-amount，掉落则+amount
                 if (value.getIsSpawn().equals("true")) {
@@ -120,8 +116,6 @@ public class ItemApp {
                         list.add(iterator.next().toString().split("=")[1]);
                         index.put(value.getItemName().split("\\.")[2],list);
 
-
-
                     }
 
                     context.output(tag, index);
@@ -135,9 +129,6 @@ public class ItemApp {
                 aliveItemIndex.clear();
             }
         });
-
-
-
 
         DataStream<Map<String,ArrayList<String>>> sideOutput = tuple2itemBeanKeyedDS.getSideOutput(tag);
         sideOutput.flatMap(new FlatMapFunction<Map<String, ArrayList<String>>, Tuple2<String,String>>() {
@@ -234,8 +225,6 @@ public class ItemApp {
                 );
 
         //TODO 4.输出物品的当前坐标，以及物品当前状态是被销毁还是被创建
-
-
         sideOutput.print();
         env.execute("Item Module");
     }

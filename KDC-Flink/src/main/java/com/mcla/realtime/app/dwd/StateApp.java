@@ -3,6 +3,8 @@ package com.mcla.realtime.app.dwd;
 import com.alibaba.fastjson.JSON;
 import com.mcla.realtime.bean.state.StateBean;
 import com.mcla.realtime.utils.MyKafkaUtil;
+import com.mcla.realtime.utils.MyPravegaUtil;
+import io.pravega.connectors.flink.FlinkPravegaReader;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.apache.flink.connector.jdbc.JdbcExecutionOptions;
@@ -24,16 +26,18 @@ import java.time.format.DateTimeFormatter;
  */
 public class StateApp {
     public static void main(String[] args) throws Exception {
-        //TODO 1.从Kafka中读取数据
-        String Topic = "dwd_state_log";
-        String groupId = "base_state_app_group";
-
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
-        // 调用Kafka工具类，获取FlinkKafkaConsumer
-        FlinkKafkaConsumer<String> kafkaSource = MyKafkaUtil.getKafkaSource(Topic, groupId,true);
-        // 创建一个Kafka输入流
-        DataStreamSource<String> jsonStrDS = env.addSource(kafkaSource);
+
+        //TODO 1.从Pravega中读取数据
+        String scope = "dwd_state_log";
+        String stream = "base_state_app_stream";
+
+        // 调用Pravega工具类，获取FlinkPravegaReader
+        FlinkPravegaReader<String> pravegaSource = MyPravegaUtil.getPravegaReader(args, scope, stream);
+        // 创建一个Pravega输入流
+        DataStreamSource<String> jsonStrDS = env.addSource(pravegaSource);
+
         //TODO 2.将Item数据转为JavaBean
         SingleOutputStreamOperator<StateBean> stateBeanDS = jsonStrDS.map((jsonStr) -> JSON.parseObject(jsonStr, StateBean.class));
 
@@ -63,10 +67,6 @@ public class StateApp {
                         .build()
                 )
         );
-        // 按时间戳写入当前状态到数据库
-
-
-        //TODO 4.输出物品的当前坐标，以及物品当前状态是被销毁还是被创建
 
         env.execute("State Module");
     }

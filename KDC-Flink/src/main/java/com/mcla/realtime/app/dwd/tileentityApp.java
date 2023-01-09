@@ -7,6 +7,8 @@ import com.mcla.realtime.bean.ItemBean;
 import com.mcla.realtime.bean.TileEntityBean;
 import com.mcla.realtime.operator.DBscanWindowProcessor;
 import com.mcla.realtime.utils.MyKafkaUtil;
+import com.mcla.realtime.utils.MyPravegaUtil;
+import io.pravega.connectors.flink.FlinkPravegaReader;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.state.MapState;
@@ -39,16 +41,17 @@ import java.util.*;
 
 public class tileentityApp {
     public static void main(String[] args) throws Exception {
-        //TODO 1.从Kafka中读取数据
-        String Topic = "dwd_tileentity_log";
-        String groupId = "base_tileEntity_app_group";
-
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
-        // 调用Kafka工具类，获取FlinkKafkaConsumer
-        FlinkKafkaConsumer<String> kafkaSource = MyKafkaUtil.getKafkaSource(Topic, groupId,true);
-        // 创建一个Kafka输入流
-        DataStreamSource<String> jsonStrDS = env.addSource(kafkaSource);
+
+        //TODO 1.从Pravega中读取数据
+        String scope = "dwd_tileentity_log";
+        String stream = "base_tileEntity_app_stream";
+
+        // 调用Pravega工具类，获取FlinkPravegaReader
+        FlinkPravegaReader<String> pravegaSource = MyPravegaUtil.getPravegaReader(args, scope, stream);
+        // 创建一个Pravega输入流
+        DataStreamSource<String> jsonStrDS = env.addSource(pravegaSource);
         //TODO 2.将Item数据转为JavaBean
         SingleOutputStreamOperator<TileEntityBean> EntityBeanDS = jsonStrDS.map((jsonStr) -> JSON.parseObject(jsonStr, TileEntityBean.class));
         //TODO 3.按物品名分类，统计每类掉落物品当前的数量
@@ -109,7 +112,6 @@ public class tileentityApp {
         }).returns(Types.TUPLE(Types.STRING, Types.LONG));
 
         // 输出每类掉落物品当前的数量
-
         tuple2tileEntityBeanKeyedDS.returns(Types.TUPLE(Types.STRING, Types.LONG)).addSink(
                 JdbcSink.sink(
                         "replace into NumsCount (Name,Nums,Type) values (?,?,?)",
@@ -132,10 +134,8 @@ public class tileentityApp {
                 )
         );
 
-
         //TODO 4.输出物品的当前坐标，以及物品当前状态是被销毁还是被创建
         //输出当前存活生物的下标
-
         DataStream<Map<String,ArrayList<String>>> sideOutput = tuple2tileEntityBeanKeyedDS.getSideOutput(tag);
         sideOutput.flatMap(
                 new FlatMapFunction<Map<String, ArrayList<String>>, Tuple2<String,String>>() {
@@ -207,8 +207,6 @@ public class tileentityApp {
                         )
                 );
 
-
         env.execute("tileEnity Module");
-
     }
 }

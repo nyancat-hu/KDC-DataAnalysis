@@ -5,6 +5,8 @@ import com.mcla.realtime.bean.DbscanBean;
 import com.mcla.realtime.bean.EntityBean;
 import com.mcla.realtime.operator.DBscanWindowProcessor;
 import com.mcla.realtime.utils.MyKafkaUtil;
+import com.mcla.realtime.utils.MyPravegaUtil;
+import io.pravega.connectors.flink.FlinkPravegaReader;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.state.MapState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
@@ -42,16 +44,17 @@ public class entityApp {
      * @date 2022/11/15 20:07
      */
     public static void main(String[] args) throws Exception {
-        //TODO 1.从Kafka中读取数据
-        String Topic = "dwd_entity_log";
-        String groupId = "base_entity_app_group";
-
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
-        // 调用Kafka工具类，获取FlinkKafkaConsumer
-        FlinkKafkaConsumer<String> kafkaSource = MyKafkaUtil.getKafkaSource(Topic, groupId,true);
-        // 创建一个Kafka输入流
-        DataStreamSource<String> jsonStrDS = env.addSource(kafkaSource);
+
+        //TODO 1.从Pravega中读取数据
+        String scope = "dwd_entity_log";
+        String stream = "base_entity_app_stream";
+
+        // 调用Pravega工具类，获取FlinkPravegaReader
+        FlinkPravegaReader<String> pravegaSource = MyPravegaUtil.getPravegaReader(args, scope, stream);
+        // 创建一个Pravega输入流
+        DataStreamSource<String> jsonStrDS = env.addSource(pravegaSource);
         //TODO 2.将Item数据转为JavaBean
         SingleOutputStreamOperator<EntityBean> EntityBeanDS = jsonStrDS.map((jsonStr) -> JSON.parseObject(jsonStr, EntityBean.class));
         //TODO 3.按物品名分类，统计每类掉落物品当前的数量
@@ -100,9 +103,7 @@ public class entityApp {
                     }
                     alive.remove(value.getTag());
 
-
                     Iterator iterator = alive.iterator();
-
 
                     while (iterator.hasNext()) {
                         list.add(iterator.next().toString().split("=")[1]);
@@ -113,17 +114,14 @@ public class entityApp {
                 collector.collect(new Tuple2<>(value.getEntityName(), lastEntityNums.value()));
             }
 
-
             @Override
             public void close() throws Exception {
                 lastEntityNums.clear();
                 alive.clear();
             }
-
         });
 
         // 输出每类掉落物品当前的数量
-
         tuple2EntityBeanKeyedDS.returns(Types.TUPLE(Types.STRING, Types.LONG)).addSink(
                 JdbcSink.sink(
                         "replace into NumsCount(Name,Nums,Type) values (?, ? ,?)",
@@ -154,7 +152,6 @@ public class entityApp {
                     }
                 }
         )
-
                 .returns(Types.TUPLE(Types.STRING, Types.STRING)).addSink(JdbcSink.sink(
                         "replace into EntityAlive (AliveHashCode,AliveLocation) values (?, ?)",
                         (statement, str) -> {
@@ -176,7 +173,6 @@ public class entityApp {
                 );
         //输出当前存活的生物
 //        sideOutput.print();
-
 
         //输出聚类中心点
         sideOutput.flatMap((FlatMapFunction<Map<String,ArrayList<String>>, DbscanBean>) (strings, collector) -> {
@@ -218,7 +214,6 @@ public class entityApp {
                                 .build()
                         )
                 );
-
 
         env.execute("Entity Module");
     }
