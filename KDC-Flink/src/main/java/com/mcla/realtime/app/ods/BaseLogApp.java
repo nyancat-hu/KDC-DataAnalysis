@@ -98,10 +98,10 @@ public class BaseLogApp {
         FlinkKafkaProducer<String> stateSink = MyKafkaUtil.getKafkaSink(TOPIC_STATE);
         outputDS.addSink(stateSink);
 
-//        itemDS.print("page>>>>");
-//        tileEntityDS.print("start>>>>");
-//        entityDS.print("display>>>>");
-//        outputDS.print();
+        itemDS.print("itemStream>>>>");
+        tileEntityDS.print("tileEntityStream>>>>");
+        entityDS.print("entityStream>>>>");
+        outputDS.print("stateStream>>>>");
 
         env.execute("Shunting Module");
 
