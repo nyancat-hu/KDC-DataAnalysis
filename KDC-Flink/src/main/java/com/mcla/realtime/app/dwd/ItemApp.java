@@ -193,7 +193,7 @@ public class ItemApp {
         }).returns(TypeInformation.of(DbscanBean.class))
                 .keyBy(data -> "DontChange")
                 .window(TumblingProcessingTimeWindows.of(Time.seconds(10L)))
-                .process(new DBscanWindowProcessor())
+                .process(new DBscanWindowProcessor("Item"))
                 .filter(str->!str.equals(""))
                 .addSink(JdbcSink.sink(
                         "UPDATE DensityTable SET CenterPosition = ?,ChunkLocation = ? WHERE `Name` = 'item' ",

@@ -171,7 +171,7 @@ public class tileentityApp {
         }).returns(TypeInformation.of(DbscanBean.class))
                 .keyBy(data -> "DontChange")
                 .window(TumblingProcessingTimeWindows.of(Time.seconds(10L)))
-                .process(new DBscanWindowProcessor())
+                .process(new DBscanWindowProcessor("tileEnity"))
                 .filter(str->!str.equals(""))
                 .addSink(JdbcSink.sink(
                         "UPDATE DensityTable SET CenterPosition = ?,ChunkLocation = ? WHERE `Name` = 'tileEntity' ",

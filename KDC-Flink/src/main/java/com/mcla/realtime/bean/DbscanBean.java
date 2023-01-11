@@ -51,6 +51,6 @@ public class DbscanBean {
     }
 
     // 权重 alpha
-    public int alpha;
+    public int alpha = 1;
 
 }
